@@ -14,7 +14,8 @@ written against its APIs, so the two move together:
   and say what changed, until you run `npx librepublish-astro sync`.
 - **Rendering.** `<Blocks>` (a component for every block type, enforced),
   `<Image>` (the CMS's renditions as a srcset, with the focal point),
-  `<RichText>` (the CMS's Markdown as safe HTML), `<Seo>`, `linkHref` and
+  `<RichText>` (the CMS's Markdown as safe HTML), `<BrandStyles>` (Settings ›
+  Brand as CSS custom properties), `<Seo>`, `linkHref` and
   `recordPath`.
 - **Forms.** `<Form slug="…"/>` draws a form built in the CMS from its live
   definition on every request — every field type, its rules checked in the
@@ -254,6 +255,55 @@ build time and on Workers alike.
 Generated types keep `markdown` fields as `string`, with a
 `/** … CMS Markdown: render with <RichText> */` note on each.
 
+## Branding
+
+Settings › Brand in the CMS is the site's visual identity: a logo and a
+favicon, a primary and a secondary color, a font, corners and a shadow.
+`GET /api/v1/site` carries it as `data.branding` (`CmsBranding`), with only
+what's set: `logo` and `favicon` are asset objects (`url`, `width`,
+`height`, `alt`, `srcset`…), the rest plain values.
+
+`<BrandStyles />` puts it into CSS as custom properties on `:root`, for the
+site's own CSS to read:
+
+```astro
+---
+import BrandStyles from "@librepublish/astro/components/BrandStyles.astro";
+import { runtimeClient } from "@librepublish/astro/runtime/env";
+const site = (await runtimeClient().site()).data;
+---
+<head>
+  <BrandStyles site={site} loadFont />
+  {site.branding.favicon && <link rel="icon" href={site.branding.favicon.url} />}
+  <style is:global>
+    body { font-family: var(--brand-font, system-ui, sans-serif); }
+    .button { background: var(--brand-primary); color: var(--brand-on-primary); border-radius: var(--brand-radius); box-shadow: var(--brand-shadow); }
+  </style>
+</head>
+```
+
+| Property | From |
+|---|---|
+| `--brand-primary` | `primary_color`, as `#rrggbb`. |
+| `--brand-on-primary` | Text that reads on it: `#ffffff`, or `#1c1917` on a light primary. |
+| `--brand-secondary` | `secondary_color`. |
+| `--brand-font` | `font`, then a fallback stack of its kind (sans or serif). |
+| `--brand-radius` | `border_radius`: `0`, `0.25rem`, `0.5rem` or `0.875rem`. |
+| `--brand-shadow` | `box_shadow`: `none` or a shadow, small to large. |
+
+Only what's set is written, and nothing at all when nothing is. The CMS
+checks every value when it's saved and when it's delivered; this checks
+them again, because they go into CSS: colors must be hex, the font, corners
+and shadow one of the CMS's names, and nothing from the API is placed into
+the CSS as it came — the values are rebuilt from the checked hex digits and
+the integration's own tables. Props: `site` (or `branding`), `loadFont`
+(also link the font from Google Fonts; off by default, for a site that
+hosts its fonts), `selector` (default `:root`).
+
+`brandingCss(site, { selector })`, `brandingFontHref(site)` and
+`checkedBranding(site)` from `@librepublish/astro/branding` do the same as
+functions.
+
 ## Forms
 
 A form is built in the CMS (Content › Forms) and drawn from its live
@@ -367,12 +417,21 @@ what fails. `cms({ siteHealth: "error" })` makes a failing check stop the build.
 | `@librepublish/astro/live` | `cmsLivePages`, `cmsLiveEntries`, `cacheHint`. |
 | `@librepublish/astro/client` | `createClient`, `linkHref`, `recordPath`, `routeParam`, `CmsError`, and the API's types. |
 | `@librepublish/astro/rich-text` | `renderRichText`, `isSafeHref`. |
+| `@librepublish/astro/branding` | `brandingCss`, `brandingFontHref`, `checkedBranding`, `hexColor`, `isLight`. |
 | `@librepublish/astro/forms` | `formDefinition` and the form types. |
 | `@librepublish/astro/forms/rules` | The generic validator `<Form>` runs: `validate`, `check`, `postedFrom`. |
 | `@librepublish/astro/schema` | `buildSchemas`: the CMS's JSON Schema as Zod. |
-| `@librepublish/astro/components/*.astro` | `Blocks`, `Image`, `RichText`, `Seo`, `Form`. |
+| `@librepublish/astro/components/*.astro` | `Blocks`, `Image`, `RichText`, `BrandStyles`, `Seo`, `Form`. |
 | `librepublish:types` | Generated from the CMS's schema. |
 | `npx librepublish-astro sync\|check` | The schema lock. |
+
+## Changes in 0.3.2
+
+- `site.branding` (`CmsBranding`): the CMS's Settings › Brand — logo,
+  favicon, colors, font, corners, shadow — from `GET /api/v1/site`.
+- `<BrandStyles />` and `brandingCss` (`@librepublish/astro/branding`): the
+  branding as `--brand-*` CSS custom properties, every value checked again
+  and rebuilt before it reaches the CSS.
 
 ## Changes in 0.3.1
 

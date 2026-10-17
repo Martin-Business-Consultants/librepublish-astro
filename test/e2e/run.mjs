@@ -94,6 +94,7 @@ try {
   upload.append("alt", "A gradient");
   const { asset } = await api("POST", "/api/assets", upload);
   const image = String(asset.id);
+  await api("PATCH", "/api/settings/branding", { setting: { data: { logo_id: image, primary_color: "#B45309", font: "Lora", border_radius: "large", top_bar: "dark" } } });
   await api("POST", "/api/collections", { collection: { slug: "posts", name: "Posts", api_enabled: true, schema: [
     { name: "summary", label: "Summary", type: "text", required: true },
     { name: "cover", label: "Cover", type: "asset" },
@@ -164,6 +165,8 @@ try {
     assert.match(read("posts/hello-world/index.html"), /First post/);
     assert.match(read("index.html"), /data-block="text"><p>Some <strong>markdown<\/strong>\.<\/p>/, "<RichText> renders a markdown field");
     assert.match(read("posts/hello-world/index.html"), /<article><h1>Hi<\/h1>/, "<RichText> renders body_markdown");
+    assert.match(read("index.html"), /<style>:root\{--brand-primary:#b45309;--brand-on-primary:#ffffff;--brand-font:"Lora", Georgia, "Times New Roman", serif;--brand-radius:0\.875rem\}<\/style>/, "<BrandStyles> draws Settings › Brand");
+    assert.match(read("index.html"), /<nav><img src="[^"]*\/hero\.png"/, "the logo");
     assert.match(read("sitemap.xml"), /<loc>https:\/\/site\.test\/about<\/loc>/);
     assert.match(read("robots.txt"), /Sitemap: /);
     assert.match(read("_redirects"), /# From the CMS/);

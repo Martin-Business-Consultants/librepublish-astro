@@ -175,6 +175,22 @@ export interface CmsSite {
   api_version: string;
   /** The widths the CMS renders image variants at (w<width>), ascending. */
   image_widths: number[];
+  /** The visual identity (Settings › Brand): only what's set. Put it into CSS with brandingCss / <BrandStyles />. */
+  branding: CmsBranding;
+}
+
+/** GET /api/v1/site's `branding`: each key only when it's set. */
+export interface CmsBranding {
+  logo?: CmsAsset;
+  favicon?: CmsAsset;
+  /** Hex, #rgb or #rrggbb. */
+  primary_color?: string;
+  /** Hex: the color the grays lean toward. */
+  secondary_color?: string;
+  /** A Google Fonts family. */
+  font?: "Inter" | "DM Sans" | "Manrope" | "Playfair Display" | "Lora";
+  border_radius?: "none" | "small" | "medium" | "large";
+  box_shadow?: "none" | "small" | "medium" | "large";
 }
 
 export interface CmsContent {
