@@ -1,9 +1,9 @@
 ---
-// The text block: Markdown from the CMS. A real site runs it through a
-// Markdown renderer; the example shows it as text.
+// The text block: its body is the CMS's rich text (Markdown), drawn as HTML.
+import RichText from "@librepublish/astro/components/RichText.astro";
 import type { BlockProps } from "librepublish:types";
 
 type Props = BlockProps<"text">;
 const { body } = Astro.props;
 ---
-<section data-block="text"><p set:text={body} /></section>
+<section data-block="text"><RichText value={body} /></section>

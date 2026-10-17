@@ -1,7 +1,7 @@
 {
   "name": "@librepublish/astro",
-  "version": "0.3.0",
-  "description": "Build an Astro site on LibrePublish CMS (the Go core): schema-locked typed content loaders, live collections, generated types, blocks, images, SEO, live forms, sitemap, redirects, cache purges and build checks",
+  "version": "0.3.1",
+  "description": "Build an Astro site on LibrePublish CMS (the Go core): schema-locked typed content loaders, live collections, generated types, blocks, rich text, images, SEO, live forms, sitemap, redirects, cache purges and build checks",
   "license": "FSL-1.1-MIT",
   "type": "module",
   "repository": {
@@ -28,6 +28,10 @@
     "./client": {
       "types": "./dist/client.d.ts",
       "default": "./dist/client.js"
+    },
+    "./rich-text": {
+      "types": "./dist/rich-text.d.ts",
+      "default": "./dist/rich-text.js"
     },
     "./loaders": {
       "types": "./dist/loaders.d.ts",
@@ -71,6 +75,9 @@
   },
   "engines": {
     "node": ">=22.12.0"
+  },
+  "dependencies": {
+    "markdown-it": "^15.0.2"
   },
   "peerDependencies": {
     "astro": "^7.0.0"

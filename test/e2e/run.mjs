@@ -162,6 +162,8 @@ try {
     assert.match(read("about/index.html"), /Who we are/, "a page's own fields");
     assert.match(read("about/index.html"), /data-block="columns"[\s\S]*data-block="heading"/, "nested blocks");
     assert.match(read("posts/hello-world/index.html"), /First post/);
+    assert.match(read("index.html"), /data-block="text"><p>Some <strong>markdown<\/strong>\.<\/p>/, "<RichText> renders a markdown field");
+    assert.match(read("posts/hello-world/index.html"), /<article><h1>Hi<\/h1>/, "<RichText> renders body_markdown");
     assert.match(read("sitemap.xml"), /<loc>https:\/\/site\.test\/about<\/loc>/);
     assert.match(read("robots.txt"), /Sitemap: /);
     assert.match(read("_redirects"), /# From the CMS/);

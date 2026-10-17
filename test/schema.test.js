@@ -61,6 +61,15 @@ test("SEO declares json_ld (a node or a list of nodes) and exclude_from_sitemap"
   assert.match(definitions(schema.data), /"json_ld"\?: \(\{\n?[\s\S]*?\[key: string\]: unknown;[\s\S]*?\}\) \| \(Array<[\s\S]*?>\) \| null;/);
 });
 
+test("markdown fields are strings, marked as Markdown to render with <RichText>", () => {
+  const bio = schema.data.collections.posts.properties.author.properties.bio;
+  assert.equal(bio["x-cms-type"], "markdown");
+  assert.equal(bio.contentMediaType, "text/markdown");
+  const types = definitions(schema.data);
+  assert.match(types, /\/\*\* Bio — CMS Markdown: render with <RichText> \*\/\n\s*"bio"\?: string \| null;/);
+  assert.match(types, /\/\*\* CMS Markdown: render with <RichText> \*\/ body_markdown: string;/);
+});
+
 test("open where the schema doesn't close an object", () => {
   const object = buildSchemas({ blocks: { b: { type: "object", additionalProperties: false, properties: {
     items: { type: "array", "x-cms-type": "repeater", items: { type: "object", properties: { label: { type: "string", "x-cms-type": "string" } }, required: [] } },

@@ -96,7 +96,7 @@ export function definitions(schema: CmsSchema): string {
   for (const slug of collections) {
     const typeName = name(slug, "Fields");
     out.push(doc(schema.collections[slug].title), `export type ${typeName} = ${object(schema.collections[slug], 0)};`);
-    entries.push(`  ${JSON.stringify(slug)}: RecordBase & { collection: ${JSON.stringify(slug)}; frontmatter: ${typeName}; body_markdown: string; blocks: Block[] | null };`);
+    entries.push(`  ${JSON.stringify(slug)}: RecordBase & { collection: ${JSON.stringify(slug)}; frontmatter: ${typeName}; /** ${RICH_TEXT_NOTE} */ body_markdown: string; blocks: Block[] | null };`);
   }
   out.push("/** Each collection's live entries' shape, by collection. */", `export interface Entries {${entries.length ? `\n${entries.join("\n")}\n` : ""}}`);
 
@@ -182,13 +182,16 @@ function object(json: JsonSchema, depth: number): string {
   const required = new Set(json.required ?? []);
   const lines = Object.entries(json.properties ?? {}).map(([key, property_]) => {
     const optional = !required.has(key);
-    const comment = property_.title || property_.description
-      ? `${pad}/** ${[property_.title, property_.description].filter(Boolean).join(" — ").replace(/\*\//g, "*\\/")} */\n` : "";
+    const notes = [property_.title, property_.description, property_["x-cms-type"] === "markdown" ? RICH_TEXT_NOTE : undefined].filter(Boolean);
+    const comment = notes.length ? `${pad}/** ${notes.join(" — ").replace(/\*\//g, "*\\/")} */\n` : "";
     return `${comment}${pad}${JSON.stringify(key)}${optional ? "?" : ""}: ${property(property_, !optional, depth + 1)};`;
   });
   if (json.additionalProperties !== false) lines.push(`${pad}[key: string]: unknown;`);
   return lines.length ? `{\n${lines.join("\n")}\n${"  ".repeat(depth)}}` : "Record<string, never>";
 }
+
+/** What a markdown field's type says about it. */
+const RICH_TEXT_NOTE = "CMS Markdown: render with <RichText>";
 
 function doc(title: unknown): string {
   return `/** ${String(title ?? "").replace(/\*\//g, "*\\/")} */`;

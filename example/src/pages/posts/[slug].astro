@@ -2,6 +2,7 @@
 import { getCollection } from "astro:content";
 import Blocks from "@librepublish/astro/components/Blocks.astro";
 import Image from "@librepublish/astro/components/Image.astro";
+import RichText from "@librepublish/astro/components/RichText.astro";
 import Base from "../../layouts/Base.astro";
 import { components } from "../../components/blocks";
 import { assetsById } from "../../lib/assets";
@@ -16,7 +17,7 @@ const assets = await assetsById();
   <h1>{post.title}</h1>
   <p>{post.frontmatter.summary}</p>
   <Image asset={post.frontmatter.cover ? assets[post.frontmatter.cover] : null} sizes="100vw" />
-  {/* body_markdown is Markdown: a real site runs it through a Markdown renderer. */}
-  {post.body_markdown && <article set:text={post.body_markdown} />}
+  {/* body_markdown is the CMS's rich text (Markdown), drawn as HTML. */}
+  {post.body_markdown && <article><RichText value={post.body_markdown} /></article>}
   <Blocks blocks={post.blocks} components={components} assets={assets} />
 </Base>

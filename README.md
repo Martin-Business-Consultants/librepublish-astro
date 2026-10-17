@@ -13,8 +13,9 @@ written against its APIs, so the two move together:
   against. When the CMS's schema moves, `astro build` and `astro check` stop
   and say what changed, until you run `npx librepublish-astro sync`.
 - **Rendering.** `<Blocks>` (a component for every block type, enforced),
-  `<Image>` (the CMS's renditions as a srcset, with the focal point), `<Seo>`,
-  `linkHref` and `recordPath`.
+  `<Image>` (the CMS's renditions as a srcset, with the focal point),
+  `<RichText>` (the CMS's Markdown as safe HTML), `<Seo>`, `linkHref` and
+  `recordPath`.
 - **Forms.** `<Form slug="…"/>` draws a form built in the CMS from its live
   definition on every request — every field type, its rules checked in the
   browser by one generic validator, errors from the CMS beside each field,
@@ -209,8 +210,49 @@ const { heading, image_id, assets } = Astro.props;
   regenerated on every `astro dev`, `astro sync` and `astro build`. An
   optional field is `T | null`. Asset ids and record refs are branded strings
   (`AssetId`, `RecordRef`).
-- **Field values.** `markdown` fields are Markdown. Link fields go through
-  `linkHref(link)`.
+- **Field values.** `markdown` fields (and `body_markdown`) are Markdown:
+  draw them with `<RichText>` (below). `string` and `text` fields are plain
+  text. Link fields go through `linkHref(link)`.
+
+## Rich text
+
+A `markdown` field is the CMS's rich text: written in the admin's editor,
+stored as Markdown, and drawn by the site. Every other text field is plain
+text, and the CMS refuses HTML typed into either (docs/delivery-api.md,
+"Text and rich text"), so formatting lives in one place.
+
+```astro
+---
+import RichText from "@librepublish/astro/components/RichText.astro";
+// A block with a string field (heading) and two markdown fields (intro, body).
+const { heading, intro, body } = Astro.props;
+---
+<h2>{heading}</h2>                                     <!-- plain text: as text -->
+<p class="lead"><RichText value={intro} inline /></p>  <!-- no <p> of its own -->
+<RichText value={body} class="prose" rel="noopener noreferrer" target="_blank" />
+```
+
+| Prop | |
+|---|---|
+| `value` | The Markdown (`string \| null \| undefined`); nothing is drawn for none. |
+| `class` | Wraps the HTML in a `<div>` (a `<span>` when `inline`) with this class; without it the HTML is placed as is. |
+| `inline` | One paragraph's worth without its `<p>`, for inside a heading or a paragraph. |
+| `rel`, `target` | Put on links to other sites (absolute `http(s)` addresses). |
+
+`renderRichText(markdown, { inline, rel, target })` from
+`@librepublish/astro/rich-text` returns the same HTML as a string (for an
+RSS feed, say). It renders what the editor writes — paragraphs, headings,
+bold, italic, strikethrough, links, bullet, numbered and task lists (nested
+too), quotes, code and code blocks, rules, and line breaks — and it's safe on
+any input: HTML in the Markdown is escaped, never passed through, and a link
+goes only to `http(s)`, `mailto:`, `tel:` or a path (`javascript:` and the
+like stay text). Images and tables, which the editor doesn't write, stay
+text too. It's [markdown-it](https://github.com/markdown-it/markdown-it)
+with raw HTML off: CommonMark, maintained, and no DOM needed, so it runs at
+build time and on Workers alike.
+
+Generated types keep `markdown` fields as `string`, with a
+`/** … CMS Markdown: render with <RichText> */` note on each.
 
 ## Forms
 
@@ -324,12 +366,23 @@ what fails. `cms({ siteHealth: "error" })` makes a failing check stop the build.
 | `@librepublish/astro/loaders` | `cmsPages`, `cmsEntries`, `cmsGlobals`, `cmsAssets`. |
 | `@librepublish/astro/live` | `cmsLivePages`, `cmsLiveEntries`, `cacheHint`. |
 | `@librepublish/astro/client` | `createClient`, `linkHref`, `recordPath`, `routeParam`, `CmsError`, and the API's types. |
+| `@librepublish/astro/rich-text` | `renderRichText`, `isSafeHref`. |
 | `@librepublish/astro/forms` | `formDefinition` and the form types. |
 | `@librepublish/astro/forms/rules` | The generic validator `<Form>` runs: `validate`, `check`, `postedFrom`. |
 | `@librepublish/astro/schema` | `buildSchemas`: the CMS's JSON Schema as Zod. |
-| `@librepublish/astro/components/*.astro` | `Blocks`, `Image`, `Seo`, `Form`. |
+| `@librepublish/astro/components/*.astro` | `Blocks`, `Image`, `RichText`, `Seo`, `Form`. |
 | `librepublish:types` | Generated from the CMS's schema. |
 | `npx librepublish-astro sync\|check` | The schema lock. |
+
+## Changes in 0.3.1
+
+- `<RichText>` and `renderRichText` (`@librepublish/astro/rich-text`): the
+  CMS's Markdown fields as safe HTML. New dependency: `markdown-it`.
+- Generated types note each `markdown` field (and `body_markdown`) as CMS
+  Markdown to render with `<RichText>`.
+- The CMS now refuses HTML in `string`, `text` and `markdown` fields, and
+  its schema marks `markdown` fields `contentMediaType: "text/markdown"`
+  (a new schema digest: run `npx librepublish-astro sync`).
 
 ## Changes in 0.3
 
