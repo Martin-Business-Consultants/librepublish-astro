@@ -53,6 +53,17 @@ export interface CmsZod {
   blockData: Record<string, Zod>;
 }
 
+/** A richtext field: the admin editor's document (Tiptap JSON). The CMS checks its node and mark types on save. */
+const attrValue = z.union([z.string(), z.number(), z.boolean(), z.null()]);
+const richTextNode: Zod = z.lazy(() => z.strictObject({
+  type: z.string(),
+  attrs: z.record(z.string(), attrValue).optional(),
+  text: z.string().optional(),
+  marks: z.array(z.strictObject({ type: z.string(), attrs: z.record(z.string(), attrValue).optional() })).optional(),
+  content: z.array(richTextNode).optional(),
+}));
+export const richText = z.strictObject({ type: z.literal("doc"), content: z.array(richTextNode).optional() });
+
 const nullToEmpty = (value: unknown) => (value === null || value === undefined ? {} : value);
 
 export function buildSchemas(schema: CmsSchema): CmsZod {
@@ -181,6 +192,7 @@ class Builder {
     switch (json["x-cms-type"]) {
       case "blocks": return z.array(this.block);
       case "link": return link;
+      case "richtext": return richText;
       case "url": return z.string().refine((url) => url.trim() !== "" && safeURL(url), { message: "must be a web address (http or https), mailto:, tel:, or a path" });
       case "datetime": return z.string().regex(RFC3339, { message: "must be an ISO 8601 datetime" });
     }

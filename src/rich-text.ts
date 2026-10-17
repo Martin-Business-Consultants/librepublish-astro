@@ -79,11 +79,93 @@ md.core.ruler.after("inline", "task_lists", (state: StateCore) => {
 md.renderer.rules.task_checkbox = (tokens: Token[], idx: number) =>
   `<input type="checkbox" disabled${tokens[idx].meta?.checked ? " checked" : ""}> `;
 
+/** A node of a rich text document: the admin editor's Tiptap JSON. */
+export interface RichTextNode {
+  type: string;
+  attrs?: Record<string, string | number | boolean | null>;
+  text?: string;
+  marks?: Array<{ type: string; attrs?: Record<string, string | number | boolean | null> }>;
+  content?: RichTextNode[];
+}
+/** A richtext field's value. */
+export interface RichTextDoc { type: "doc"; content?: RichTextNode[] }
+
 /**
- * CMS Markdown as HTML, safe to set as a page's HTML; "" for no value.
+ * A rich text field as HTML, safe to set as a page's HTML; "" for no value.
+ * A richtext field's document (Tiptap JSON) or Markdown (a markdown field,
+ * an entry's body_markdown).
  */
-export function renderRichText(markdown: string | null | undefined, options: RichTextOptions = {}): string {
-  if (typeof markdown !== "string" || !markdown.trim()) return "";
+export function renderRichText(value: RichTextDoc | string | null | undefined, options: RichTextOptions = {}): string {
+  if (value && typeof value === "object") return renderDoc(value, options);
+  if (typeof value !== "string" || !value.trim()) return "";
   const env = { rel: options.rel, target: options.target };
-  return options.inline ? md.renderInline(markdown, env) : md.render(markdown, env);
+  return options.inline ? md.renderInline(value, env) : md.render(value, env);
+}
+
+const escapeHTML = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+/** The nodes the editor makes, as the tags they draw. */
+const BLOCK_TAGS: Record<string, string> = {
+  paragraph: "p", bulletList: "ul", listItem: "li", blockquote: "blockquote", taskList: "ul",
+};
+const MARK_TAGS: Record<string, string> = { bold: "strong", italic: "em", strike: "s", code: "code" };
+
+function renderDoc(doc: RichTextDoc, options: RichTextOptions): string {
+  const nodes = doc.content ?? [];
+  // Inline: one paragraph's text, without its <p>.
+  if (options.inline) {
+    const first = nodes.find((n) => n.type === "paragraph" || n.type === "heading");
+    return first ? children(first, options) : "";
+  }
+  const html = nodes.map((n) => node(n, options)).join("");
+  return html.replace(/^(<p><\/p>)+$/, "");
+}
+
+function children(n: RichTextNode, options: RichTextOptions): string {
+  return (n.content ?? []).map((c) => node(c, options)).join("");
+}
+
+function node(n: RichTextNode, options: RichTextOptions): string {
+  switch (n.type) {
+    case "text": return text(n, options);
+    case "hardBreak": return "<br>";
+    case "horizontalRule": return "<hr>";
+    case "heading": {
+      const level = Math.min(6, Math.max(1, Number(n.attrs?.level) || 2));
+      return `<h${level}>${children(n, options)}</h${level}>`;
+    }
+    case "orderedList": {
+      const start = Number(n.attrs?.start);
+      return `<ol${Number.isInteger(start) && start !== 1 ? ` start="${start}"` : ""}>${children(n, options)}</ol>`;
+    }
+    case "codeBlock": {
+      const lang = typeof n.attrs?.language === "string" && /^[\w+-]+$/.test(n.attrs.language) ? ` class="language-${n.attrs.language}"` : "";
+      return `<pre><code${lang}>${(n.content ?? []).map((c) => escapeHTML(c.text ?? "")).join("")}</code></pre>`;
+    }
+    case "taskItem":
+      return `<li class="task-list-item"><input type="checkbox" disabled${n.attrs?.checked ? " checked" : ""}> ${children(n, options)}</li>`;
+    case "taskList":
+      return `<ul class="contains-task-list">${children(n, options)}</ul>`;
+  }
+  const tag = BLOCK_TAGS[n.type];
+  // A node this renderer doesn't know (the CMS refuses them) keeps its text.
+  return tag ? `<${tag}>${children(n, options)}</${tag}>` : children(n, options);
+}
+
+function text(n: RichTextNode, options: RichTextOptions): string {
+  let html = escapeHTML(n.text ?? "");
+  for (const mark of n.marks ?? []) {
+    if (mark.type === "link") {
+      const href = typeof mark.attrs?.href === "string" ? mark.attrs.href : "";
+      if (!href || !isSafeHref(href)) continue;
+      const ext = external(href);
+      const rel = ext && options.rel ? ` rel="${escapeHTML(options.rel)}"` : "";
+      const target = ext && options.target ? ` target="${escapeHTML(options.target)}"` : "";
+      html = `<a href="${escapeHTML(href)}"${rel}${target}>${html}</a>`;
+      continue;
+    }
+    const tag = MARK_TAGS[mark.type];
+    if (tag) html = `<${tag}>${html}</${tag}>`;
+  }
+  return html;
 }

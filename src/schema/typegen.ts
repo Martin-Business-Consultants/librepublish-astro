@@ -27,6 +27,10 @@ export function definitions(schema: CmsSchema): string {
     'export type RecordRef = string & { readonly __cms: "RecordRef" };',
     "/** A link field: to a URL, a page by path, or an entry of a collection. */",
     'export type Link = { kind: "url" | "page" | "entry"; value: string; collection?: string; [key: string]: unknown };',
+    "/** A node of a rich text document (the admin editor's Tiptap JSON). */",
+    "export type RichTextNode = { type: string; attrs?: Record<string, string | number | boolean | null>; text?: string; marks?: Array<{ type: string; attrs?: Record<string, string | number | boolean | null> }>; content?: RichTextNode[] };",
+    "/** A richtext field: render it with <RichText>. */",
+    'export type RichText = { type: "doc"; content?: RichTextNode[] };',
     "export type Term = { id: number; slug: string; title: string };",
     "export type Translation = { locale: string; path: string };",
     "export type Asset = {",
@@ -156,6 +160,7 @@ function type(json: JsonSchema, depth: number): string {
   switch (json["x-cms-type"]) {
     case "blocks": return "Block[]";
     case "link": return "Link";
+    case "richtext": return "RichText";
     case "asset": return "AssetId";
     case "record_ref": return "RecordRef";
     case "record_refs": return "RecordRef[]";
@@ -182,7 +187,7 @@ function object(json: JsonSchema, depth: number): string {
   const required = new Set(json.required ?? []);
   const lines = Object.entries(json.properties ?? {}).map(([key, property_]) => {
     const optional = !required.has(key);
-    const notes = [property_.title, property_.description, property_["x-cms-type"] === "markdown" ? RICH_TEXT_NOTE : undefined].filter(Boolean);
+    const notes = [property_.title, property_.description, property_["x-cms-type"] === "markdown" ? RICH_TEXT_NOTE : property_["x-cms-type"] === "richtext" ? "Rich text: render with <RichText>" : undefined].filter(Boolean);
     const comment = notes.length ? `${pad}/** ${notes.join(" — ").replace(/\*\//g, "*\\/")} */\n` : "";
     return `${comment}${pad}${JSON.stringify(key)}${optional ? "?" : ""}: ${property(property_, !optional, depth + 1)};`;
   });

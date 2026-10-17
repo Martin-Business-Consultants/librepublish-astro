@@ -217,10 +217,14 @@ const { heading, image_id, assets } = Astro.props;
 
 ## Rich text
 
-A `markdown` field is the CMS's rich text: written in the admin's editor,
-stored as Markdown, and drawn by the site. Every other text field is plain
-text, and the CMS refuses HTML typed into either (docs/delivery-api.md,
-"Text and rich text"), so formatting lives in one place.
+A `richtext` field is the CMS's rich text: written in the admin's editor
+(Tiptap) and stored as the editor's own document, Tiptap JSON, which the
+site turns into HTML. `<RichText>` and `renderRichText()` draw it: every
+piece of text escaped, only the editor's nodes and marks, links only to
+http(s), mailto:, tel: or a path. They draw a `markdown` field (and an
+entry's `body_markdown`) the same way. Plain text fields stay plain, and the
+CMS refuses HTML typed into them (docs/delivery-api.md, "Text and rich
+text"), so formatting lives in one place.
 
 ```astro
 ---
@@ -424,6 +428,12 @@ what fails. `cms({ siteHealth: "error" })` makes a failing check stop the build.
 | `@librepublish/astro/components/*.astro` | `Blocks`, `Image`, `RichText`, `BrandStyles`, `Seo`, `Form`. |
 | `librepublish:types` | Generated from the CMS's schema. |
 | `npx librepublish-astro sync\|check` | The schema lock. |
+
+## Changes in 0.3.3
+
+- `richtext` fields: the CMS's rich text, the admin editor's document
+  (Tiptap JSON). The schema types it (`RichText`), every document is
+  validated, and `<RichText>` / `renderRichText()` draw it as HTML.
 
 ## Changes in 0.3.2
 

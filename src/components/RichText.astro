@@ -1,8 +1,9 @@
 ---
 /**
- * A CMS Markdown field (a `markdown` field, an entry's `body_markdown`) as
- * HTML: what the admin's editor writes, with any HTML in it escaped and
- * links only to http(s), mailto:, tel: or a path (renderRichText).
+ * A CMS rich text field as HTML: a `richtext` field's document (the admin
+ * editor's Tiptap JSON), or Markdown (a `markdown` field, an entry's
+ * `body_markdown`). Text is escaped and links go only to http(s), mailto:,
+ * tel: or a path (renderRichText).
  *
  *   <RichText value={post.body_markdown} class="prose" />
  *   <h2><RichText value={block.heading} inline /></h2>
@@ -10,10 +11,11 @@
  * Nothing is drawn for an empty value. With `class`, the HTML is wrapped in
  * a <div> (a <span> when inline) carrying it; without, it's placed as is.
  */
-import { renderRichText } from "@librepublish/astro/rich-text";
+import { renderRichText, type RichTextDoc } from "@librepublish/astro/rich-text";
 
 interface Props {
-  value: string | null | undefined;
+  /** A richtext field's document, or Markdown (a markdown field, body_markdown). */
+  value: RichTextDoc | string | null | undefined;
   class?: string;
   /** One paragraph's worth, without the <p> around it. */
   inline?: boolean;

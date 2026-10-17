@@ -110,3 +110,47 @@ test("<RichText> places the HTML, wrapped only when given a class", async () => 
   assert.equal((await render({ value: "[x](https://x.test)", rel: "noopener" })).trim(), '<p><a href="https://x.test" rel="noopener">x</a></p>');
   assert.equal((await render({ value: undefined, class: "prose" })).trim(), "");
 });
+
+// ---- richtext documents (the admin editor's Tiptap JSON) -------------------
+
+const p = (...content) => ({ type: "paragraph", content });
+const t = (text, ...marks) => ({ type: "text", text, ...(marks.length ? { marks } : {}) });
+const doc = (...content) => ({ type: "doc", content });
+
+test("a document renders the editor's nodes and marks", () => {
+  const html = renderRichText(doc(
+    p(t("Built in "), t("1869", { type: "bold" }), t(", a "), t("mill", { type: "italic" }, { type: "bold" }), t("."), { type: "hardBreak" }, t("Now a brewpub.")),
+    { type: "heading", attrs: { level: 3 }, content: [t("Today")] },
+    { type: "bulletList", content: [{ type: "listItem", content: [p(t("beer"))] }] },
+    { type: "orderedList", attrs: { start: 3 }, content: [{ type: "listItem", content: [p(t("three"))] }] },
+    { type: "blockquote", content: [p(t("quoted"))] },
+    { type: "horizontalRule" },
+    { type: "codeBlock", attrs: { language: "js" }, content: [t("a < b")] },
+    { type: "taskList", content: [{ type: "taskItem", attrs: { checked: true }, content: [p(t("done"))] }] },
+  ));
+  assert.equal(html,
+    "<p>Built in <strong>1869</strong>, a <strong><em>mill</em></strong>.<br>Now a brewpub.</p>" +
+    "<h3>Today</h3><ul><li><p>beer</p></li></ul><ol start=\"3\"><li><p>three</p></li></ol>" +
+    "<blockquote><p>quoted</p></blockquote><hr><pre><code class=\"language-js\">a &lt; b</code></pre>" +
+    "<ul class=\"contains-task-list\"><li class=\"task-list-item\"><input type=\"checkbox\" disabled checked> <p>done</p></li></ul>");
+});
+
+test("a document's text is escaped and only safe links are links", () => {
+  const html = renderRichText(doc(p(
+    t("<script>alert(1)</script>"),
+    t("bad", { type: "link", attrs: { href: "javascript:alert(1)" } }),
+    t("ok", { type: "link", attrs: { href: "https://example.com/?a=1&b=\"2\"" } }),
+    t("menu", { type: "link", attrs: { href: "/menu/" } }),
+    t("x", { type: "textStyle", attrs: { color: "red" } }),
+  )), { rel: "noopener", target: "_blank" });
+  assert.equal(html, "<p>&lt;script&gt;alert(1)&lt;/script&gt;bad" +
+    "<a href=\"https://example.com/?a=1&amp;b=&quot;2&quot;\" rel=\"noopener\" target=\"_blank\">ok</a>" +
+    "<a href=\"/menu/\">menu</a>x</p>");
+});
+
+test("a document renders inline, and empty documents render nothing", () => {
+  assert.equal(renderRichText(doc(p(t("One "), t("line", { type: "bold" }))), { inline: true }), "One <strong>line</strong>");
+  assert.equal(renderRichText({ type: "doc" }), "");
+  assert.equal(renderRichText(doc({ type: "paragraph" })), "");
+  assert.equal(renderRichText(null), "");
+});
