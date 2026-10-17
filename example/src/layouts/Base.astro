@@ -1,0 +1,28 @@
+---
+import { getEntry } from "astro:content";
+import Seo from "@librepublish/astro/components/Seo.astro";
+import { linkHref } from "@librepublish/astro/client";
+import { assetsById } from "../lib/assets";
+
+interface Props {
+  record?: { title: string; locale: string; seo: Record<string, unknown>; translations: { locale: string; path: string }[] };
+  title?: string;
+}
+
+const { record, title } = Astro.props;
+const assets = await assetsById();
+const nav = (await getEntry("globals", "nav"))?.data;
+const items = nav?.slug === "nav" ? nav.data.items ?? [] : [];
+---
+<!doctype html>
+<html lang={record?.locale ?? "en"}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {record ? <Seo record={record} assets={assets} /> : <title>{title}</title>}
+  </head>
+  <body>
+    <nav>{items.map((item) => <a href={linkHref(item.link)}>{item.label}</a>)}</nav>
+    <main><slot /></main>
+  </body>
+</html>
