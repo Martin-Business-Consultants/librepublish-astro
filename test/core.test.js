@@ -124,6 +124,30 @@ test("sitemap.xml keeps only what the site serves: built pages and on-demand rou
   assert.doesNotMatch(kept, /appetizer/);
 });
 
+test("the webhook URL the build reports matches the route under the site's trailingSlash", async () => {
+  const { webhookPath } = await import("../dist/index.js");
+  assert.equal(webhookPath("always"), "/_cms/webhook/");
+  assert.equal(webhookPath("never"), "/_cms/webhook");
+  assert.equal(webhookPath("ignore"), "/_cms/webhook");
+  assert.equal(webhookPath(undefined), "/_cms/webhook");
+});
+
+test("sitemap URLs take the site's trailingSlash form", async () => {
+  const { slashed } = await import("../dist/sitemap-filter.js");
+  const site = "https://acme.test";
+  assert.equal(slashed("https://acme.test/about", "always", site), "https://acme.test/about/");
+  assert.equal(slashed("https://acme.test/about/", "always", site), "https://acme.test/about/");
+  assert.equal(slashed("https://acme.test/fr/a-propos?x=1#y", "always", site), "https://acme.test/fr/a-propos/?x=1#y");
+  assert.equal(slashed("https://acme.test/about/", "never", site), "https://acme.test/about");
+  assert.equal(slashed("https://acme.test/about", "ignore", site), "https://acme.test/about");
+  assert.equal(slashed("https://acme.test/about", undefined, site), "https://acme.test/about");
+  assert.equal(slashed("https://acme.test/", "never", site), "https://acme.test/");
+  assert.equal(slashed("https://acme.test", "always", site), "https://acme.test");
+  assert.equal(slashed("https://acme.test/feed.xml", "always", site), "https://acme.test/feed.xml");
+  assert.equal(slashed("https://elsewhere.test/about", "always", site), "https://elsewhere.test/about");
+  assert.equal(slashed("/posts/hello", "always"), "/posts/hello/");
+});
+
 test("the delivery fixtures have the shapes the runtime routes read", () => {
   const sitemap = fixture("delivery", "sitemap");
   for (const url of sitemap.data) {

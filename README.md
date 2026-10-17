@@ -272,7 +272,7 @@ Deploy. Set these as the Worker's secrets:
 - `CLOUDFLARE_ZONE_ID` and `CLOUDFLARE_API_TOKEN` (with Cache Purge), to purge
   Cloudflare's cache by tag.
 
-`/_cms/webhook` checks `X-CMS-Signature` (contracts/webhook_contract.json)
+`/_cms/webhook` (`/_cms/webhook/` on a site with `trailingSlash: "always"`, and the build reports that address) checks `X-CMS-Signature` (contracts/webhook_contract.json)
 and takes the deploy's purge (`{tags, reason}`) or a webhook's event: `page.*`
 and `entry.*` purge what they name, `global.updated` its global, and
 `schema.changed` answers `202 rebuild_required` — the site's code was checked
@@ -311,7 +311,7 @@ what fails. `cms({ siteHealth: "error" })` makes a failing check stop the build.
 |---|---|---|
 | `url`, `token` | `CMS_BASE_URL`, `CMS_API_TOKEN` | Where the CMS is, and the site's service token. |
 | `i18n` | `true` | Sets up Astro's i18n from the CMS's locales. Every locale except the default gets a path prefix. |
-| `sitemap` | `true` | Adds `/sitemap.xml`, and `/robots.txt` unless `public/robots.txt` exists. After a build, the sitemap keeps only the URLs the site serves (its built pages and on-demand routes), and warns about the rest. |
+| `sitemap` | `true` | Adds `/sitemap.xml`, and `/robots.txt` unless `public/robots.txt` exists. The sitemap's URLs follow the site's `trailingSlash` (`always` or `never`), so they match its canonicals. After a build, the sitemap keeps only the URLs the site serves (its built pages and on-demand routes), and warns about the rest. |
 | `redirects` | `true` | After a build, writes the CMS's redirects into `_redirects`, after the site's own rules. |
 | `siteHealth` | `"warn"` | `"error"` stops the build on a failing check; `"off"` skips the checks. |
 | `report` | `true` | Tells the CMS about each build (`POST /api/frontend/builds`): how the site renders, its webhook, and the content cursor it built from. |

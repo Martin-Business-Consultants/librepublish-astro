@@ -2,16 +2,22 @@
  * /sitemap.xml, from the CMS (GET /api/v1/sitemap): every URL it lists, with
  * lastmod and hreflang alternates. The CMS gives absolute URLs once Settings ›
  * General has the site's URL, paths until then: those are made absolute on
- * the site (`site` in astro.config, or the CMS's). Prerendered.
+ * the site (`site` in astro.config, or the CMS's), and given the site's
+ * `trailingSlash` form, so they match its canonical URLs. Prerendered.
  */
 import type { APIRoute } from "astro";
+import { slashed } from "../sitemap-filter.js";
 import { runtimeClient } from "./env.js";
+
+/** astro.config's `trailingSlash`, set by the integration at build time. */
+declare const __LIBREPUBLISH_TRAILING_SLASH__: string | undefined;
+const TRAILING_SLASH = typeof __LIBREPUBLISH_TRAILING_SLASH__ === "string" ? __LIBREPUBLISH_TRAILING_SLASH__ : undefined;
 
 export const prerender = true;
 
 export const GET: APIRoute = async ({ site }) => {
   const { data } = await runtimeClient().sitemap();
-  const absolute = (url: string) => (site ? new URL(url, site).href : url);
+  const absolute = (url: string) => slashed(site ? new URL(url, site).href : url, TRAILING_SLASH, site);
   const urls = data.map((url) => [
     "  <url>",
     `    <loc>${escape(absolute(url.loc || url.path))}</loc>`,

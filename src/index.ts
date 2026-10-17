@@ -85,6 +85,7 @@ export default function cms(options: CmsOptions = {}): AstroIntegration {
   let render: "static" | "server" | "hybrid" = "static";
   let onDemandPatterns: RegExp[] = [];
   let startedAt = 0;
+  let trailingSlash: string | undefined;
 
   // build, sync and check must hold to the lock; dev and preview get on with a warning.
   const strict = () => command === "build" || command === "sync";
@@ -95,6 +96,7 @@ export default function cms(options: CmsOptions = {}): AstroIntegration {
       "astro:config:setup": async ({ config, command: given, updateConfig, injectRoute, addMiddleware, addWatchFile, logger }) => {
         startedAt = Date.now();
         command = given;
+        trailingSlash = config.trailingSlash;
         const root = fileURLToPath(config.root);
         connection = resolveConnection(root, command === "dev" ? "development" : "production", options);
 
@@ -163,7 +165,11 @@ export default function cms(options: CmsOptions = {}): AstroIntegration {
             ? { i18n: { locales, defaultLocale: site.data.default_locale, routing: { prefixDefaultLocale: false, redirectToDefaultLocale: false, fallbackType: "redirect" as const } } }
             : {}),
           // The digest the site is built against, for the runtime to compare with what the CMS says.
-          vite: { define: { __LIBREPUBLISH_SCHEMA_DIGEST__: JSON.stringify(read?.live.digest ?? null) } },
+          // And the site's trailingSlash, for the sitemap's URLs to match its canonicals.
+          vite: { define: {
+            __LIBREPUBLISH_SCHEMA_DIGEST__: JSON.stringify(read?.live.digest ?? null),
+            __LIBREPUBLISH_TRAILING_SLASH__: JSON.stringify(config.trailingSlash ?? "ignore"),
+          } },
         });
 
         if (sitemap) {
@@ -255,7 +261,7 @@ export default function cms(options: CmsOptions = {}): AstroIntegration {
           try {
             const answer = await client.reportBuild({
               render,
-              webhook_url: onDemand && siteUrl ? new URL("/_cms/webhook", siteUrl).href : undefined,
+              webhook_url: onDemand && siteUrl ? new URL(webhookPath(trailingSlash), siteUrl).href : undefined,
               content_cursor: lastCursor,
               integration: NAME,
               integration_version: VERSION,
@@ -278,6 +284,15 @@ export default function cms(options: CmsOptions = {}): AstroIntegration {
 }
 
 export { cms };
+
+/**
+ * Where /_cms/webhook answers, in the site's `trailingSlash` form: with
+ * "always", Astro matches only "/_cms/webhook/", so that's the address the
+ * build reports to the CMS.
+ */
+export function webhookPath(trailingSlash?: string): string {
+  return trailingSlash === "always" ? "/_cms/webhook/" : "/_cms/webhook";
+}
 export type { CmsClient } from "./client.js";
 
 async function exists(url: URL) {
