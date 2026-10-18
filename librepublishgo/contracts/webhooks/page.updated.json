@@ -1,0 +1,16 @@
+{
+  "data": {
+    "id": 2,
+    "locale": "en",
+    "path": "about",
+    "published_at": "2026-01-01T00:00:00Z",
+    "slug": "about",
+    "status": "published",
+    "title": "About Acme",
+    "updated_at": "2026-01-01T00:00:00Z",
+    "url": "https://acme.example/about-us"
+  },
+  "delivered_at": "2026-01-01T00:00:00Z",
+  "event": "page.updated",
+  "tenant": "acme"
+}

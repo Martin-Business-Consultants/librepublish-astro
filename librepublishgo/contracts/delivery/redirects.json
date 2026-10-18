@@ -1,0 +1,17 @@
+{
+  "data": [
+    {
+      "destination": "/about",
+      "source": "/old",
+      "status": 301,
+      "wildcard": false
+    },
+    {
+      "destination": "/posts/:splat",
+      "source": "/blog/*",
+      "status": 302,
+      "wildcard": true
+    }
+  ],
+  "meta": {}
+}

@@ -1,0 +1,36 @@
+{
+  "error": "invalid",
+  "errors": {
+    "consent": [
+      "must be ticked"
+    ],
+    "contact_by": [
+      "isn't one of the choices"
+    ],
+    "date": [
+      "isn't a date"
+    ],
+    "email": [
+      "isn't an email address"
+    ],
+    "guests": [
+      "is at most 12"
+    ],
+    "interests": [
+      "Spam isn't one of the choices"
+    ],
+    "name": [
+      "can't be blank"
+    ],
+    "phone": [
+      "isn't a phone number"
+    ],
+    "topic": [
+      "isn't one of the choices"
+    ],
+    "website": [
+      "isn't a web address (https://…)"
+    ]
+  },
+  "message": "Some fields need attention."
+}

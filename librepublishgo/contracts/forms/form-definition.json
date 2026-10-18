@@ -1,0 +1,191 @@
+{
+  "form": {
+    "action": "https://cms.acme.example/api/x/forms/submit?form=contact",
+    "digest": "sha256:6e8067bb23572103f71eb9194248c3bc930335cb4b242be6ca5405fbf5a4913a",
+    "fields": [
+      {
+        "label": "",
+        "name": "",
+        "text": "Say hello",
+        "type": "heading"
+      },
+      {
+        "label": "Name",
+        "max_length": 80,
+        "name": "name",
+        "required": true,
+        "rules": {
+          "max_length": 80,
+          "required": true
+        },
+        "type": "text",
+        "width": "half"
+      },
+      {
+        "label": "Email",
+        "name": "email",
+        "required": true,
+        "rules": {
+          "max_length": 500,
+          "pattern": "^[^\\x00-\\x20@<>,;]+@[^\\x00-\\x20@<>,;]+\\.[^\\x00-\\x20@<>,;]+$",
+          "required": true
+        },
+        "type": "email",
+        "width": "half"
+      },
+      {
+        "label": "Phone",
+        "name": "phone",
+        "rules": {
+          "max_length": 500,
+          "pattern": "^[ +\\(\\)\\.\\-]*(?:[0-9][ +\\(\\)\\.\\-]*){5,}$",
+          "required": false
+        },
+        "type": "tel"
+      },
+      {
+        "label": "Message",
+        "name": "message",
+        "rows": 5,
+        "rules": {
+          "max_length": 10000,
+          "required": false
+        },
+        "type": "textarea"
+      },
+      {
+        "label": "Guests",
+        "max": 12,
+        "min": 1,
+        "name": "guests",
+        "rules": {
+          "max": 12,
+          "max_length": 500,
+          "min": 1,
+          "pattern": "^-?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+\\-]?[0-9]+)?$",
+          "required": false
+        },
+        "type": "number"
+      },
+      {
+        "label": "Topic",
+        "name": "topic",
+        "options": [
+          "Sales",
+          "Support"
+        ],
+        "rules": {
+          "max_length": 500,
+          "options": [
+            "Sales",
+            "Support"
+          ],
+          "required": false
+        },
+        "type": "select"
+      },
+      {
+        "label": "Contact me by",
+        "name": "contact_by",
+        "options": [
+          "Email",
+          "Phone"
+        ],
+        "rules": {
+          "max_length": 500,
+          "options": [
+            "Email",
+            "Phone"
+          ],
+          "required": false
+        },
+        "type": "radio"
+      },
+      {
+        "label": "Interests",
+        "name": "interests",
+        "options": [
+          "News",
+          "Events"
+        ],
+        "rules": {
+          "max_length": 500,
+          "options": [
+            "News",
+            "Events"
+          ],
+          "required": false
+        },
+        "type": "checkboxes"
+      },
+      {
+        "label": "Consent",
+        "name": "consent",
+        "required": true,
+        "rules": {
+          "max_length": 500,
+          "required": true
+        },
+        "text": "You may email me.",
+        "type": "checkbox"
+      },
+      {
+        "label": "Preferred date",
+        "name": "date",
+        "rules": {
+          "max_length": 500,
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "required": false
+        },
+        "type": "date"
+      },
+      {
+        "label": "Website",
+        "name": "website",
+        "rules": {
+          "max_length": 500,
+          "pattern": "^[hH][tT][tT][pP][sS]?:\\/\\/[^\\x00-\\x20\\x7f\\/?#@\\\\]+(?:[\\/?#][^\\x00-\\x20\\x7f]*)?$",
+          "required": false
+        },
+        "type": "url"
+      },
+      {
+        "accept": ".pdf, image/*",
+        "label": "Brief",
+        "max_mb": 2,
+        "name": "brief",
+        "rules": {
+          "accept": [
+            ".pdf",
+            "image/*"
+          ],
+          "max_mb": 2,
+          "required": false
+        },
+        "type": "file"
+      },
+      {
+        "default": "site",
+        "label": "",
+        "name": "source",
+        "rules": {
+          "max_length": 500,
+          "required": false
+        },
+        "type": "hidden"
+      }
+    ],
+    "name": "Contact",
+    "open": true,
+    "redirect_url": "",
+    "slug": "contact",
+    "spam": {
+      "captcha": null,
+      "honeypot_field": "_hp",
+      "min_seconds": 3,
+      "timestamp_field": "_ts"
+    },
+    "submit_label": "Send",
+    "success_message": "Thanks!"
+  }
+}

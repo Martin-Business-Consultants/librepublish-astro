@@ -1,0 +1,47 @@
+{
+  "data": [
+    {
+      "alternates": [],
+      "lastmod": "2026-01-01T00:00:00Z",
+      "loc": "https://acme.example/about-us",
+      "locale": "en",
+      "path": "https://acme.example/about-us",
+      "type": "page"
+    },
+    {
+      "alternates": [],
+      "lastmod": "2026-01-01T00:00:00Z",
+      "loc": "https://acme.example/",
+      "locale": "en",
+      "path": "/",
+      "type": "page"
+    },
+    {
+      "alternates": [],
+      "lastmod": "2026-01-01T00:00:00Z",
+      "loc": "https://acme.example/posts/first-post",
+      "locale": "en",
+      "path": "/posts/first-post",
+      "type": "entry"
+    },
+    {
+      "alternates": [],
+      "lastmod": "2026-01-01T00:00:00Z",
+      "loc": "https://acme.example/posts/second-post",
+      "locale": "en",
+      "path": "/posts/second-post",
+      "type": "entry"
+    },
+    {
+      "alternates": [],
+      "lastmod": "2026-01-01T00:00:00Z",
+      "loc": "https://acme.example/projects/alpha",
+      "locale": "en",
+      "path": "/projects/alpha",
+      "type": "entry"
+    }
+  ],
+  "meta": {
+    "total": 5
+  }
+}

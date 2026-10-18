@@ -1,0 +1,35 @@
+{
+  "data": [
+    {
+      "key": "site_url",
+      "message": "The public site URL is set.",
+      "state": "passes"
+    },
+    {
+      "key": "cms_url",
+      "message": "The CMS's own address is set: file and image URLs start with it.",
+      "state": "passes"
+    },
+    {
+      "key": "meta_descriptions",
+      "message": "Every live page has a meta description.",
+      "state": "passes"
+    },
+    {
+      "key": "title_length",
+      "message": "Page titles fit in search results.",
+      "state": "passes"
+    },
+    {
+      "key": "home_page",
+      "message": "The home page is live.",
+      "state": "passes"
+    },
+    {
+      "key": "image_alt",
+      "message": "Every image in use has alt text.",
+      "state": "passes"
+    }
+  ],
+  "meta": {}
+}

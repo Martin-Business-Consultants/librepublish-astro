@@ -106,7 +106,7 @@ test("the validator is generic: no form's names or types in its code", async () 
 });
 
 test("FIELD_TYPES is the Forms plugin's palette", async () => {
-  const palette = await readFile(new URL("../../../plugins/forms/manifest.go", import.meta.url), "utf8");
+  const palette = await readFile(new URL("../librepublishgo/plugins/forms/manifest.go", import.meta.url), "utf8");
   const goTypes = [...palette.matchAll(/\{"type": "([a-z]+)", "label"/g)].map((m) => m[1]);
   assert.ok(goTypes.length > 5, "read the palette from plugins/forms/manifest.go");
   assert.deepEqual([...goTypes].sort(), [...FIELD_TYPES].sort());

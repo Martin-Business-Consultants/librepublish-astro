@@ -1,0 +1,24 @@
+{
+  "data": {
+    "data": {
+      "links": [
+        {
+          "label": "About",
+          "url": {
+            "kind": "page",
+            "value": "about"
+          }
+        }
+      ],
+      "tagline": "Made by Acme."
+    },
+    "id": 1,
+    "name": "Navigation",
+    "slug": "nav",
+    "updated_at": "2026-01-01T00:00:00.000Z"
+  },
+  "included": {
+    "assets": {}
+  },
+  "meta": {}
+}

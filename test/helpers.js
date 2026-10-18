@@ -2,10 +2,10 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-/** The repository's contracts/ directory: the golden fixtures the Go core records (TestContract) and is held to. */
-export const contracts = new URL("../../../contracts/", import.meta.url);
+/** librepublishgo's contracts/ (copied into librepublishgo/): the golden fixtures the Go core records (TestContract) and is held to. */
+export const contracts = new URL("../librepublishgo/contracts/", import.meta.url);
 
-/** A contract fixture: contracts/<group>/<name>.json at the repository root. */
+/** A contract fixture: contracts/<group>/<name>.json. */
 export function fixture(group, name) {
   return JSON.parse(readFileSync(fixturePath(group, name), "utf8"));
 }

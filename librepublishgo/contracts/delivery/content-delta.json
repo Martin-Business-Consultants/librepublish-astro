@@ -1,0 +1,61 @@
+{
+  "data": {
+    "entries": [],
+    "globals": [],
+    "pages": [
+      {
+        "blocks": [
+          {
+            "data": {
+              "body": "We make **things**."
+            },
+            "id": "b1",
+            "type": "text"
+          }
+        ],
+        "category": null,
+        "frontmatter": {
+          "founded": "2020-01-01T00:00:00Z",
+          "team_size": 12
+        },
+        "id": 2,
+        "locale": "en",
+        "path": "about",
+        "published_at": "2026-01-01T00:00:00.000Z",
+        "seo": {
+          "canonical_url": "https://acme.example/about-us",
+          "json_ld": {
+            "@type": "Organization",
+            "name": "Acme"
+          },
+          "meta_description": "Who we are."
+        },
+        "slug": "about",
+        "tags": [],
+        "title": "About Acme",
+        "translations": [],
+        "updated_at": "2026-01-01T00:00:00.000Z",
+        "url": "https://acme.example/about-us"
+      }
+    ],
+    "removed": {
+      "entries": [
+        {
+          "collection": "posts",
+          "id": 2,
+          "slug": "second-post"
+        }
+      ],
+      "globals": [],
+      "pages": []
+    }
+  },
+  "included": {
+    "assets": {}
+  },
+  "meta": {
+    "cursor": "<cursor>",
+    "full": false,
+    "since": "<cursor>"
+  }
+}

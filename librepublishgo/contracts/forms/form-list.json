@@ -1,0 +1,16 @@
+{
+  "forms": [
+    {
+      "digest": "sha256:6e8067bb23572103f71eb9194248c3bc930335cb4b242be6ca5405fbf5a4913a",
+      "name": "Contact",
+      "open": true,
+      "slug": "contact"
+    },
+    {
+      "digest": "sha256:285f0950902373c2b49c329fc4fdfcf1ee35b0d6f7dbc90624548937843ff26a",
+      "name": "Newsletter",
+      "open": false,
+      "slug": "newsletter"
+    }
+  ]
+}

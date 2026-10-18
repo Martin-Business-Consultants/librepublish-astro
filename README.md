@@ -29,7 +29,7 @@ written against its APIs, so the two move together:
 - **Build checks.** Site health is checked on every build, and each build
   reports to the CMS.
 
-It reads the delivery API (`/api/v1`, docs/delivery-api.md), which only
+It reads the delivery API (`/api/v1`, librepublishgo's [docs/delivery-api.md](https://github.com/Martin-Business-Consultants/librepublishgo/blob/main/docs/delivery-api.md)), which only
 serves live content, always answers in one shape, and gives absolute asset
 URLs. Astro 7.4+ and the Go core are required; it's built for Cloudflare
 Workers & Pages and runs on any adapter.
@@ -37,9 +37,17 @@ Workers & Pages and runs on any adapter.
 ## Install
 
 ```sh
-npm install @librepublish/astro
-# or, from a checkout of this repository (`prepare` builds it):
-npm install /path/to/libre-publish/packages/astro
+# Not on npm yet: from GitHub, pinned to a commit or tag (`prepare` builds it)
+npm install github:Martin-Business-Consultants/librepublish-astro#<commit>
+# or from a checkout of this repository:
+npm install /path/to/librepublish-astro
+```
+
+With pnpm, let it build: in `pnpm-workspace.yaml`,
+
+```yaml
+allowBuilds:
+  '@librepublish/astro@https://codeload.github.com/Martin-Business-Consultants/librepublish-astro/tar.gz/<commit>': true
 ```
 
 `.env` (keep it out of git):
@@ -223,7 +231,7 @@ site turns into HTML. `<RichText>` and `renderRichText()` draw it: every
 piece of text escaped, only the editor's nodes and marks, links only to
 http(s), mailto:, tel: or a path. They draw a `markdown` field (and an
 entry's `body_markdown`) the same way. Plain text fields stay plain, and the
-CMS refuses HTML typed into them (docs/delivery-api.md, "Text and rich
+CMS refuses HTML typed into them (librepublishgo's docs/delivery-api.md, "Text and rich
 text"), so formatting lives in one place.
 
 ```astro
@@ -537,10 +545,12 @@ npx tsc --noEmit
 npm run e2e      # the example site against a real Go core, end to end
 ```
 
-The unit tests run on the contract in `contracts/` at the repository root
-(`delivery/`, `forms/`, `webhooks/`, `index.json`): the golden responses the
-Go core records and is held to by its `TestContract`. They're the
-integration's half of the drift gate (contracts/README.md): the digests the
+The unit tests run on the API contract, copied from
+[librepublishgo](https://github.com/Martin-Business-Consultants/librepublishgo)
+into `librepublishgo/contracts/` (`delivery/`, `forms/`, `webhooks/`,
+`index.json`): the golden responses the Go core records and is held to by
+its `TestContract`. They're the integration's half of the drift gate
+(`librepublishgo/contracts/README.md`): the digests the
 CMS recorded are recomputed here, the form validator must reach the server's
 recorded verdict, `<Form>` renders the recorded definition (through Astro's
 container), and `test/contracts.sha256` pins the contract files this package
@@ -548,13 +558,15 @@ was last checked against — so a contract change fails here until the
 integration is updated for it and re-pinned:
 
 ```sh
-npm test                 # fails: "contracts/ changed since packages/astro was checked against it"
+npm run contracts:sync -- ../librepublishgo   # copies contracts/ and the forms palette, records the commit
+npm test                 # fails: "librepublishgo/contracts/ changed since this package was checked against it"
 # update src/ and test/ for the change, then
 npm run contracts:pin    # rewrites test/contracts.sha256; commit it with the change
 ```
 
-`npm run e2e` builds the Go binary from this repository (or uses
-`LIBREPUBLISH_BIN`), starts it on a fresh data directory, seeds it through the
+`npm run e2e` builds the Go binary from a librepublishgo checkout
+(`LIBREPUBLISH_REPO`, `../librepublishgo` by default), or uses
+`LIBREPUBLISH_BIN`, starts it on a fresh data directory, seeds it through the
 management API, and then: checks a build without a lock fails; syncs the
 lock and runs `astro check`; builds `example/` hybrid and with live routes
 (`SSR=1`) and checks what came out; serves it and checks `/contact` draws the
@@ -562,15 +574,17 @@ live form (and follows an edit without a build) and that `/_cms/webhook`
 takes only a signed body; and checks each failure the integration promises —
 a form on a prerendered page, a moved schema (build, sync and check),
 `LIBREPUBLISH_ACCEPT_SCHEMA=1` and the type error that follows, content using
-a block type with no component, and content outside the schema. CI runs both (`.github/workflows/ci.yml`, jobs `astro` and `astro-e2e`);
-locally, from the repository root, `make astro` and `make astro-e2e`:
+a block type with no component, and content outside the schema. CI runs both
+(`.github/workflows/ci.yml`; the end to end builds the Go core at the
+librepublishgo commit in `librepublishgo/SOURCE`), and librepublishgo's CI
+runs the unit tests on its own `contracts/`, so a contract change there
+fails until this package follows. Locally:
 
 ```sh
 # Go and Node 22.12+
-cd packages/astro
 npm ci && npm run build && npm run typecheck && npm test
 (cd example && npm ci)
-npm run e2e                    # or: LIBREPUBLISH_BIN=$PWD/../../dist/librepublish npm run e2e
+LIBREPUBLISH_REPO=../librepublishgo npm run e2e    # or: LIBREPUBLISH_BIN=/path/to/librepublish npm run e2e
 ```
 
 Functional Source License 1.1, with an MIT future license, like the CMS ([LICENSE.md](LICENSE.md)).

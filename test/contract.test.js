@@ -23,9 +23,9 @@ test("contracts/ is the one this package was last checked against", () => {
   const [was, is] = [lines(pinned), lines(now)];
   const changed = [...new Set([...was.keys(), ...is.keys()])].filter((file) => was.get(file) !== is.get(file)).sort();
   assert.fail(
-    `contracts/ changed since packages/astro was checked against it: ${changed.join(", ")}.\n` +
-    "A contract change is an API change: update packages/astro (types, validation, tests) for it, " +
-    "then run `npm run contracts:pin` in packages/astro and commit both.",
+    `librepublishgo/contracts/ changed since this package was checked against it: ${changed.join(", ")}.\n` +
+    "A contract change is an API change: update the integration (types, validation, tests) for it, " +
+    "then run `npm run contracts:pin` and commit both.",
   );
 });
 

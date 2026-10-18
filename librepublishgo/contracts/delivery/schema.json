@@ -1,0 +1,1400 @@
+{
+  "data": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "blocks": {
+      "card_grid": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string",
+            "x-cms-type": "text"
+          },
+          "cards": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "description": {
+                  "title": "Description",
+                  "type": "string",
+                  "x-cms-type": "text"
+                },
+                "icon": {
+                  "title": "Icon (lucide)",
+                  "type": "string",
+                  "x-cms-type": "string"
+                },
+                "image_id": {
+                  "title": "Image asset ID",
+                  "type": "string",
+                  "x-cms-type": "asset"
+                },
+                "link_label": {
+                  "title": "Link label",
+                  "type": "string",
+                  "x-cms-type": "string"
+                },
+                "link_url": {
+                  "properties": {
+                    "collection": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "enum": [
+                        "url",
+                        "page",
+                        "entry"
+                      ],
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "value"
+                  ],
+                  "title": "Link",
+                  "type": "object",
+                  "x-cms-type": "link"
+                },
+                "subtitle": {
+                  "title": "Subtitle",
+                  "type": "string",
+                  "x-cms-type": "string"
+                },
+                "title": {
+                  "title": "Title",
+                  "type": "string",
+                  "x-cms-type": "string"
+                }
+              },
+              "required": [
+                "title"
+              ],
+              "type": "object"
+            },
+            "title": "Cards",
+            "type": "array",
+            "x-cms-type": "repeater"
+          },
+          "columns": {
+            "enum": [
+              "2",
+              "3",
+              "4"
+            ],
+            "title": "Columns",
+            "type": "string",
+            "x-cms-type": "select"
+          },
+          "heading": {
+            "title": "Heading",
+            "type": "string",
+            "x-cms-type": "string"
+          }
+        },
+        "required": [
+          "columns",
+          "cards"
+        ],
+        "title": "Card grid (legacy)",
+        "type": "object"
+      },
+      "collection_list": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "title": "Intro",
+            "type": "string",
+            "x-cms-type": "text"
+          },
+          "collection_slug": {
+            "description": "Slug of the collection to list (e.g. \"beers\").",
+            "title": "Collection",
+            "type": "string",
+            "x-cms-type": "string"
+          },
+          "filter_status": {
+            "description": "Limit to published entries (default) or include drafts/archived too.",
+            "enum": [
+              "published",
+              "any"
+            ],
+            "title": "Status filter",
+            "type": "string",
+            "x-cms-type": "select"
+          },
+          "filter_tags": {
+            "description": "Comma-separated. Entries must have all listed tags.",
+            "title": "Filter tags",
+            "type": "string",
+            "x-cms-type": "string"
+          },
+          "group_by": {
+            "description": "Optional frontmatter field to group entries by (e.g. \"section\").",
+            "title": "Group by",
+            "type": "string",
+            "x-cms-type": "string"
+          },
+          "heading": {
+            "title": "Heading",
+            "type": "string",
+            "x-cms-type": "string"
+          },
+          "layout": {
+            "enum": [
+              "grid",
+              "list",
+              "featured-first"
+            ],
+            "title": "Layout",
+            "type": "string",
+            "x-cms-type": "select"
+          },
+          "limit": {
+            "description": "Max entries to show. Leave 0 / blank for all.",
+            "title": "Limit",
+            "type": "integer",
+            "x-cms-type": "integer"
+          },
+          "sort_by": {
+            "enum": [
+              "published_at",
+              "updated_at",
+              "created_at",
+              "title"
+            ],
+            "title": "Sort by",
+            "type": "string",
+            "x-cms-type": "select"
+          },
+          "sort_dir": {
+            "enum": [
+              "desc",
+              "asc"
+            ],
+            "title": "Direction",
+            "type": "string",
+            "x-cms-type": "select"
+          }
+        },
+        "required": [
+          "collection_slug",
+          "filter_status",
+          "sort_by",
+          "sort_dir",
+          "layout"
+        ],
+        "title": "Collection list",
+        "type": "object"
+      },
+      "columns": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "column_count": {
+            "enum": [
+              "2",
+              "3",
+              "4"
+            ],
+            "title": "Columns",
+            "type": "string",
+            "x-cms-type": "select"
+          },
+          "items": {
+            "items": {
+              "properties": {
+                "data": {
+                  "type": "object"
+                },
+                "type": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "type",
+                "data"
+              ],
+              "type": "object"
+            },
+            "title": "Blocks",
+            "type": "array",
+            "x-cms-type": "blocks"
+          }
+        },
+        "required": [
+          "column_count",
+          "items"
+        ],
+        "title": "Columns",
+        "type": "object"
+      },
+      "contact_info": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "title": "Intro",
+            "type": "string",
+            "x-cms-type": "text"
+          },
+          "heading": {
+            "description": "Optional section heading. Leave blank to omit.",
+            "title": "Heading",
+            "type": "string",
+            "x-cms-type": "string"
+          }
+        },
+        "required": [],
+        "title": "Contact info",
+        "type": "object"
+      },
+      "cta": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string",
+            "x-cms-type": "string"
+          },
+          "style": {
+            "enum": [
+              "primary",
+              "secondary",
+              "ghost"
+            ],
+            "title": "Style",
+            "type": "string",
+            "x-cms-type": "select"
+          },
+          "url": {
+            "properties": {
+              "collection": {
+                "type": "string"
+              },
+              "kind": {
+                "enum": [
+                  "url",
+                  "page",
+                  "entry"
+                ],
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "value"
+            ],
+            "title": "Link",
+            "type": "object",
+            "x-cms-type": "link"
+          }
+        },
+        "required": [
+          "label",
+          "url",
+          "style"
+        ],
+        "title": "Call to action",
+        "type": "object"
+      },
+      "cta_band": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "background": {
+            "enum": [
+              "primary",
+              "muted",
+              "accent"
+            ],
+            "title": "Background",
+            "type": "string",
+            "x-cms-type": "select"
+          },
+          "body": {
+            "title": "Body",
+            "type": "string",
+            "x-cms-type": "text"
+          },
+          "ctas": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "title": "Label",
+                  "type": "string",
+                  "x-cms-type": "string"
+                },
+                "style": {
+                  "enum": [
+                    "primary",
+                    "secondary",
+                    "ghost"
+                  ],
+                  "title": "Style",
+                  "type": "string",
+                  "x-cms-type": "select"
+                },
+                "url": {
+                  "properties": {
+                    "collection": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "enum": [
+                        "url",
+                        "page",
+                        "entry"
+                      ],
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "value"
+                  ],
+                  "title": "Link",
+                  "type": "object",
+                  "x-cms-type": "link"
+                }
+              },
+              "required": [
+                "label",
+                "url",
+                "style"
+              ],
+              "type": "object"
+            },
+            "title": "Buttons",
+            "type": "array",
+            "x-cms-type": "repeater"
+          },
+          "heading": {
+            "title": "Heading",
+            "type": "string",
+            "x-cms-type": "string"
+          }
+        },
+        "required": [
+          "heading",
+          "ctas",
+          "background"
+        ],
+        "title": "CTA band",
+        "type": "object"
+      },
+      "divider": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "style": {
+            "enum": [
+              "solid",
+              "dashed",
+              "dotted"
+            ],
+            "title": "Style",
+            "type": "string",
+            "x-cms-type": "select"
+          }
+        },
+        "required": [
+          "style"
+        ],
+        "title": "Divider",
+        "type": "object"
+      },
+      "embed": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "enum": [
+              "youtube",
+              "vimeo",
+              "twitter",
+              "other"
+            ],
+            "title": "Kind",
+            "type": "string",
+            "x-cms-type": "select"
+          },
+          "url": {
+            "format": "uri-reference",
+            "title": "URL",
+            "type": "string",
+            "x-cms-type": "url"
+          }
+        },
+        "required": [
+          "url",
+          "kind"
+        ],
+        "title": "Embed",
+        "type": "object"
+      },
+      "feature_grid": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "title": "Intro",
+            "type": "string",
+            "x-cms-type": "text"
+          },
+          "columns": {
+            "enum": [
+              "2",
+              "3",
+              "4"
+            ],
+            "title": "Columns",
+            "type": "string",
+            "x-cms-type": "select"
+          },
+          "heading": {
+            "title": "Heading",
+            "type": "string",
+            "x-cms-type": "string"
+          },
+          "items": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "body": {
+                  "title": "Body",
+                  "type": "string",
+                  "x-cms-type": "text"
+                },
+                "icon": {
+                  "title": "Icon (lucide)",
+                  "type": "string",
+                  "x-cms-type": "string"
+                },
+                "link": {
+                  "properties": {
+                    "collection": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "enum": [
+                        "url",
+                        "page",
+                        "entry"
+                      ],
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "value"
+                  ],
+                  "title": "Link",
+                  "type": "object",
+                  "x-cms-type": "link"
+                },
+                "title": {
+                  "title": "Title",
+                  "type": "string",
+                  "x-cms-type": "string"
+                }
+              },
+              "required": [
+                "title",
+                "body"
+              ],
+              "type": "object"
+            },
+            "title": "Items",
+            "type": "array",
+            "x-cms-type": "repeater"
+          }
+        },
+        "required": [
+          "columns",
+          "items"
+        ],
+        "title": "Feature grid",
+        "type": "object"
+      },
+      "feature_list": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string",
+            "x-cms-type": "text"
+          },
+          "heading": {
+            "title": "Heading",
+            "type": "string",
+            "x-cms-type": "string"
+          },
+          "items": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "text": {
+                  "title": "Text",
+                  "type": "string",
+                  "x-cms-type": "string"
+                }
+              },
+              "required": [
+                "text"
+              ],
+              "type": "object"
+            },
+            "title": "Bullet items",
+            "type": "array",
+            "x-cms-type": "repeater"
+          }
+        },
+        "required": [
+          "heading",
+          "items"
+        ],
+        "title": "Feature list",
+        "type": "object"
+      },
+      "gallery": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "asset_id": {
+                  "title": "Image",
+                  "type": "string",
+                  "x-cms-type": "asset"
+                },
+                "caption": {
+                  "title": "Caption",
+                  "type": "string",
+                  "x-cms-type": "string"
+                }
+              },
+              "required": [
+                "asset_id"
+              ],
+              "type": "object"
+            },
+            "title": "Images",
+            "type": "array",
+            "x-cms-type": "repeater"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "Gallery",
+        "type": "object"
+      },
+      "heading": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "level": {
+            "enum": [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6"
+            ],
+            "title": "Level",
+            "type": "string",
+            "x-cms-type": "select"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string",
+            "x-cms-type": "string"
+          }
+        },
+        "required": [
+          "level",
+          "text"
+        ],
+        "title": "Heading",
+        "type": "object"
+      },
+      "hero": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "ctas": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "title": "Label",
+                  "type": "string",
+                  "x-cms-type": "string"
+                },
+                "style": {
+                  "enum": [
+                    "primary",
+                    "secondary",
+                    "ghost"
+                  ],
+                  "title": "Style",
+                  "type": "string",
+                  "x-cms-type": "select"
+                },
+                "url": {
+                  "properties": {
+                    "collection": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "enum": [
+                        "url",
+                        "page",
+                        "entry"
+                      ],
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "value"
+                  ],
+                  "title": "Link",
+                  "type": "object",
+                  "x-cms-type": "link"
+                }
+              },
+              "required": [
+                "label",
+                "url",
+                "style"
+              ],
+              "type": "object"
+            },
+            "title": "Buttons",
+            "type": "array",
+            "x-cms-type": "repeater"
+          },
+          "heading": {
+            "title": "Heading",
+            "type": "string",
+            "x-cms-type": "string"
+          },
+          "image_id": {
+            "title": "Image",
+            "type": "string",
+            "x-cms-type": "asset"
+          },
+          "subheading": {
+            "title": "Subheading",
+            "type": "string",
+            "x-cms-type": "text"
+          }
+        },
+        "required": [
+          "heading"
+        ],
+        "title": "Hero",
+        "type": "object"
+      },
+      "image": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {
+            "title": "Asset ID",
+            "type": "string",
+            "x-cms-type": "asset"
+          },
+          "caption": {
+            "title": "Caption",
+            "type": "string",
+            "x-cms-type": "string"
+          }
+        },
+        "required": [
+          "asset_id"
+        ],
+        "title": "Image",
+        "type": "object"
+      },
+      "media_text": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "background": {
+            "enum": [
+              "none",
+              "muted",
+              "accent"
+            ],
+            "title": "Background",
+            "type": "string",
+            "x-cms-type": "select"
+          },
+          "body": {
+            "contentMediaType": "text/markdown",
+            "title": "Body",
+            "type": "string",
+            "x-cms-type": "markdown"
+          },
+          "cta_label": {
+            "title": "CTA label",
+            "type": "string",
+            "x-cms-type": "string"
+          },
+          "cta_url": {
+            "properties": {
+              "collection": {
+                "type": "string"
+              },
+              "kind": {
+                "enum": [
+                  "url",
+                  "page",
+                  "entry"
+                ],
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "value"
+            ],
+            "title": "CTA link",
+            "type": "object",
+            "x-cms-type": "link"
+          },
+          "heading": {
+            "title": "Heading",
+            "type": "string",
+            "x-cms-type": "string"
+          },
+          "image_id": {
+            "title": "Image",
+            "type": "string",
+            "x-cms-type": "asset"
+          },
+          "side": {
+            "description": "Which side of the row the image sits on.",
+            "enum": [
+              "right",
+              "left"
+            ],
+            "title": "Image side",
+            "type": "string",
+            "x-cms-type": "select"
+          }
+        },
+        "required": [
+          "heading",
+          "body",
+          "side",
+          "background"
+        ],
+        "title": "Media + text",
+        "type": "object"
+      },
+      "partners_grid": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string",
+            "x-cms-type": "text"
+          },
+          "heading": {
+            "title": "Heading",
+            "type": "string",
+            "x-cms-type": "string"
+          },
+          "partners": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Partners",
+            "type": "array",
+            "x-cms-type": "record_refs"
+          }
+        },
+        "required": [
+          "partners"
+        ],
+        "title": "Partners grid",
+        "type": "object"
+      },
+      "pitch": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string",
+            "x-cms-type": "text"
+          },
+          "cta_label": {
+            "title": "CTA label",
+            "type": "string",
+            "x-cms-type": "string"
+          },
+          "cta_url": {
+            "properties": {
+              "collection": {
+                "type": "string"
+              },
+              "kind": {
+                "enum": [
+                  "url",
+                  "page",
+                  "entry"
+                ],
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "value"
+            ],
+            "title": "CTA link",
+            "type": "object",
+            "x-cms-type": "link"
+          },
+          "heading": {
+            "title": "Heading",
+            "type": "string",
+            "x-cms-type": "string"
+          },
+          "image_id": {
+            "title": "Image asset ID",
+            "type": "string",
+            "x-cms-type": "asset"
+          },
+          "questions": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "text": {
+                  "title": "Question",
+                  "type": "string",
+                  "x-cms-type": "string"
+                }
+              },
+              "required": [
+                "text"
+              ],
+              "type": "object"
+            },
+            "title": "Questions",
+            "type": "array",
+            "x-cms-type": "repeater"
+          }
+        },
+        "required": [
+          "heading",
+          "body"
+        ],
+        "title": "Pitch",
+        "type": "object"
+      },
+      "quote": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "attribution": {
+            "title": "Attribution",
+            "type": "string",
+            "x-cms-type": "string"
+          },
+          "text": {
+            "title": "Quote",
+            "type": "string",
+            "x-cms-type": "text"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "Quote",
+        "type": "object"
+      },
+      "stats_section": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string",
+            "x-cms-type": "text"
+          },
+          "heading": {
+            "title": "Heading",
+            "type": "string",
+            "x-cms-type": "string"
+          },
+          "image_id": {
+            "title": "Image",
+            "type": "string",
+            "x-cms-type": "asset"
+          },
+          "stats": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "title": "Label",
+                  "type": "string",
+                  "x-cms-type": "string"
+                },
+                "value": {
+                  "description": "Display string, e.g. \"98%\" or \"8,000+\"",
+                  "title": "Value",
+                  "type": "string",
+                  "x-cms-type": "string"
+                }
+              },
+              "required": [
+                "value",
+                "label"
+              ],
+              "type": "object"
+            },
+            "title": "Stats",
+            "type": "array",
+            "x-cms-type": "repeater"
+          }
+        },
+        "required": [
+          "heading",
+          "stats"
+        ],
+        "title": "Stats",
+        "type": "object"
+      },
+      "testimonial_grid": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string",
+            "x-cms-type": "text"
+          },
+          "heading": {
+            "title": "Heading",
+            "type": "string",
+            "x-cms-type": "string"
+          },
+          "testimonials": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "attribution": {
+                  "title": "Attribution",
+                  "type": "string",
+                  "x-cms-type": "string"
+                },
+                "quote": {
+                  "title": "Quote",
+                  "type": "string",
+                  "x-cms-type": "text"
+                },
+                "rating": {
+                  "title": "Rating (1–5)",
+                  "type": "integer",
+                  "x-cms-type": "integer"
+                }
+              },
+              "required": [
+                "quote",
+                "attribution"
+              ],
+              "type": "object"
+            },
+            "title": "Testimonials",
+            "type": "array",
+            "x-cms-type": "repeater"
+          }
+        },
+        "required": [
+          "heading",
+          "testimonials"
+        ],
+        "title": "Testimonial grid",
+        "type": "object"
+      },
+      "text": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "contentMediaType": "text/markdown",
+            "title": "Body (markdown)",
+            "type": "string",
+            "x-cms-type": "markdown"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "title": "Text",
+        "type": "object"
+      }
+    },
+    "collections": {
+      "posts": {
+        "additionalProperties": false,
+        "properties": {
+          "author": {
+            "additionalProperties": false,
+            "properties": {
+              "bio": {
+                "contentMediaType": "text/markdown",
+                "title": "Bio",
+                "type": "string",
+                "x-cms-type": "markdown"
+              },
+              "name": {
+                "title": "Name",
+                "type": "string",
+                "x-cms-type": "string"
+              }
+            },
+            "required": [],
+            "title": "Author",
+            "type": "object",
+            "x-cms-type": "group"
+          },
+          "cover": {
+            "title": "Cover",
+            "type": "string",
+            "x-cms-type": "asset"
+          },
+          "cta": {
+            "properties": {
+              "collection": {
+                "type": "string"
+              },
+              "kind": {
+                "enum": [
+                  "url",
+                  "page",
+                  "entry"
+                ],
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "value"
+            ],
+            "title": "Call to action",
+            "type": "object",
+            "x-cms-type": "link"
+          },
+          "event_at": {
+            "format": "date-time",
+            "title": "Event at",
+            "type": "string",
+            "x-cms-type": "datetime"
+          },
+          "faqs": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "answer": {
+                  "title": "Answer",
+                  "type": "string",
+                  "x-cms-type": "text"
+                },
+                "question": {
+                  "title": "Question",
+                  "type": "string",
+                  "x-cms-type": "string"
+                }
+              },
+              "required": [
+                "question"
+              ],
+              "type": "object"
+            },
+            "title": "FAQs",
+            "type": "array",
+            "x-cms-type": "repeater"
+          },
+          "featured": {
+            "title": "Featured",
+            "type": "boolean",
+            "x-cms-type": "boolean"
+          },
+          "keywords": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Keywords",
+            "type": "array",
+            "x-cms-type": "string_list"
+          },
+          "kind": {
+            "enum": [
+              "news",
+              "guide"
+            ],
+            "title": "Kind",
+            "type": "string",
+            "x-cms-type": "select"
+          },
+          "rating": {
+            "title": "Rating",
+            "type": "integer",
+            "x-cms-type": "integer"
+          },
+          "source": {
+            "format": "uri-reference",
+            "title": "Source",
+            "type": "string",
+            "x-cms-type": "url"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string",
+            "x-cms-type": "text"
+          }
+        },
+        "required": [
+          "summary"
+        ],
+        "title": "Posts",
+        "type": "object"
+      },
+      "projects": {
+        "additionalProperties": false,
+        "properties": {
+          "client": {
+            "title": "Client",
+            "type": "string",
+            "x-cms-type": "string"
+          },
+          "year": {
+            "title": "Year",
+            "type": "integer",
+            "x-cms-type": "integer"
+          }
+        },
+        "required": [
+          "client"
+        ],
+        "title": "Projects",
+        "type": "object"
+      }
+    },
+    "globals": {
+      "nav": {
+        "additionalProperties": false,
+        "properties": {
+          "links": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "title": "Label",
+                  "type": "string",
+                  "x-cms-type": "string"
+                },
+                "url": {
+                  "properties": {
+                    "collection": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "enum": [
+                        "url",
+                        "page",
+                        "entry"
+                      ],
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "value"
+                  ],
+                  "title": "Link",
+                  "type": "object",
+                  "x-cms-type": "link"
+                }
+              },
+              "required": [],
+              "type": "object"
+            },
+            "title": "Links",
+            "type": "array",
+            "x-cms-type": "repeater"
+          },
+          "tagline": {
+            "title": "Tagline",
+            "type": "string",
+            "x-cms-type": "string"
+          }
+        },
+        "required": [
+          "tagline"
+        ],
+        "title": "Navigation",
+        "type": "object"
+      }
+    },
+    "pages": {
+      "about": {
+        "additionalProperties": false,
+        "properties": {
+          "founded": {
+            "format": "date-time",
+            "title": "Founded",
+            "type": "string",
+            "x-cms-type": "datetime"
+          },
+          "team_size": {
+            "title": "Team size",
+            "type": "integer",
+            "x-cms-type": "integer"
+          }
+        },
+        "required": [],
+        "type": "object"
+      }
+    },
+    "seo": {
+      "additionalProperties": false,
+      "properties": {
+        "canonical_url": {
+          "format": "uri-reference",
+          "title": "Canonical URL",
+          "type": "string",
+          "x-cms-type": "url"
+        },
+        "exclude_from_sitemap": {
+          "title": "Leave out of the sitemap",
+          "type": "boolean",
+          "x-cms-type": "boolean"
+        },
+        "focus_keyword": {
+          "title": "Focus keyword",
+          "type": "string",
+          "x-cms-type": "string"
+        },
+        "json_ld": {
+          "description": "One node or a list of nodes, each with an @type.",
+          "oneOf": [
+            {
+              "type": "object"
+            },
+            {
+              "items": {
+                "type": "object"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "JSON-LD",
+          "x-cms-type": "json"
+        },
+        "meta_description": {
+          "title": "Meta description",
+          "type": "string",
+          "x-cms-type": "text"
+        },
+        "meta_title": {
+          "title": "Meta title",
+          "type": "string",
+          "x-cms-type": "string"
+        },
+        "nofollow": {
+          "title": "Ask search engines not to follow links",
+          "type": "boolean",
+          "x-cms-type": "boolean"
+        },
+        "noindex": {
+          "title": "Hide from search engines",
+          "type": "boolean",
+          "x-cms-type": "boolean"
+        },
+        "og_description": {
+          "title": "Description override",
+          "type": "string",
+          "x-cms-type": "text"
+        },
+        "og_image_id": {
+          "title": "Social share image",
+          "type": "string",
+          "x-cms-type": "asset"
+        },
+        "og_title": {
+          "title": "Title override",
+          "type": "string",
+          "x-cms-type": "string"
+        },
+        "og_type": {
+          "title": "Open Graph type",
+          "type": "string",
+          "x-cms-type": "string"
+        },
+        "schema_type": {
+          "title": "schema.org type",
+          "type": "string",
+          "x-cms-type": "string"
+        },
+        "twitter_card": {
+          "title": "Twitter card",
+          "type": "string",
+          "x-cms-type": "string"
+        }
+      },
+      "required": [],
+      "type": "object"
+    }
+  },
+  "meta": {
+    "cms_version": "dev",
+    "schema_digest": "sha256:0d28dabba17d31cd95964b5cf84a04ec08bd2a48834f9acf5b74ded13ab2b2b8"
+  }
+}

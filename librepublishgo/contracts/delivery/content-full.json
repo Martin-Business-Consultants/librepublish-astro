@@ -1,0 +1,359 @@
+{
+  "data": {
+    "entries": [
+      {
+        "blocks": [],
+        "body_markdown": "# First post\n\nWords.",
+        "category": null,
+        "collection": "posts",
+        "frontmatter": {
+          "author": {
+            "bio": "Writes *things*.",
+            "name": "Ada"
+          },
+          "cover": "1",
+          "cta": {
+            "kind": "url",
+            "value": "https://acme.example/signup"
+          },
+          "event_at": "2026-03-04T05:06:07Z",
+          "faqs": [
+            {
+              "answer": "Because.",
+              "question": "Why?"
+            }
+          ],
+          "featured": true,
+          "keywords": [
+            "launch",
+            "news"
+          ],
+          "kind": "news",
+          "rating": 5,
+          "source": "https://source.example/a",
+          "summary": "The first one."
+        },
+        "id": 1,
+        "locale": "en",
+        "published_at": "2026-01-01T00:00:00.000Z",
+        "seo": {
+          "meta_description": "First post, in brief."
+        },
+        "slug": "first-post",
+        "tags": [],
+        "title": "First post",
+        "translations": [],
+        "updated_at": "2026-01-01T00:00:00.000Z",
+        "url": "/posts/first-post"
+      },
+      {
+        "blocks": [],
+        "body_markdown": "# Second post\n\nWords.",
+        "category": null,
+        "collection": "posts",
+        "frontmatter": {
+          "author": {},
+          "kind": "guide",
+          "summary": "The second one."
+        },
+        "id": 2,
+        "locale": "en",
+        "published_at": "2026-01-01T00:00:00.000Z",
+        "seo": {
+          "meta_description": "Second post, in brief."
+        },
+        "slug": "second-post",
+        "tags": [],
+        "title": "Second post",
+        "translations": [],
+        "updated_at": "2026-01-01T00:00:00.000Z",
+        "url": "/posts/second-post"
+      },
+      {
+        "blocks": [
+          {
+            "data": {
+              "body": "The *brief*."
+            },
+            "id": "b1",
+            "type": "text"
+          },
+          {
+            "data": {
+              "attribution": "Acme",
+              "text": "Built with care."
+            },
+            "id": "p1",
+            "type": "quote"
+          }
+        ],
+        "body_markdown": "",
+        "category": null,
+        "collection": "projects",
+        "frontmatter": {
+          "client": "Initech",
+          "year": 2025
+        },
+        "id": 4,
+        "locale": "en",
+        "published_at": "2026-01-01T00:00:00.000Z",
+        "seo": {},
+        "slug": "alpha",
+        "tags": [],
+        "title": "Alpha",
+        "translations": [],
+        "updated_at": "2026-01-01T00:00:00.000Z",
+        "url": "/projects/alpha"
+      }
+    ],
+    "globals": [
+      {
+        "data": {
+          "links": [
+            {
+              "label": "About",
+              "url": {
+                "kind": "page",
+                "value": "about"
+              }
+            }
+          ],
+          "tagline": "Made by Acme."
+        },
+        "id": 1,
+        "name": "Navigation",
+        "slug": "nav",
+        "updated_at": "2026-01-01T00:00:00.000Z"
+      }
+    ],
+    "pages": [
+      {
+        "blocks": [
+          {
+            "data": {
+              "ctas": [
+                {
+                  "label": "Read the blog",
+                  "style": "primary",
+                  "url": {
+                    "kind": "url",
+                    "value": "/posts"
+                  }
+                }
+              ],
+              "heading": "Hello",
+              "image_id": "1",
+              "subheading": "From Acme."
+            },
+            "id": "b1",
+            "type": "hero"
+          },
+          {
+            "data": {
+              "collection_slug": "posts",
+              "filter_status": "published",
+              "heading": "Latest",
+              "layout": "list",
+              "sort_by": "title",
+              "sort_dir": "asc"
+            },
+            "id": "b2",
+            "resolved": {
+              "collection": {
+                "name": "Posts",
+                "slug": "posts"
+              },
+              "entries": [
+                {
+                  "category": null,
+                  "collection": "posts",
+                  "frontmatter": {
+                    "author": {
+                      "bio": "Writes *things*.",
+                      "name": "Ada"
+                    },
+                    "cover": "1",
+                    "cta": {
+                      "kind": "url",
+                      "value": "https://acme.example/signup"
+                    },
+                    "event_at": "2026-03-04T05:06:07Z",
+                    "faqs": [
+                      {
+                        "answer": "Because.",
+                        "question": "Why?"
+                      }
+                    ],
+                    "featured": true,
+                    "keywords": [
+                      "launch",
+                      "news"
+                    ],
+                    "kind": "news",
+                    "rating": 5,
+                    "source": "https://source.example/a",
+                    "summary": "The first one."
+                  },
+                  "id": 1,
+                  "locale": "en",
+                  "published_at": "2026-01-01T00:00:00.000Z",
+                  "seo": {
+                    "meta_description": "First post, in brief."
+                  },
+                  "slug": "first-post",
+                  "status": "published",
+                  "tags": [],
+                  "title": "First post",
+                  "updated_at": "2026-01-01T00:00:00.000Z",
+                  "url": "/posts/first-post"
+                },
+                {
+                  "category": null,
+                  "collection": "posts",
+                  "frontmatter": {
+                    "author": {},
+                    "kind": "guide",
+                    "summary": "The second one."
+                  },
+                  "id": 2,
+                  "locale": "en",
+                  "published_at": "2026-01-01T00:00:00.000Z",
+                  "seo": {
+                    "meta_description": "Second post, in brief."
+                  },
+                  "slug": "second-post",
+                  "status": "published",
+                  "tags": [],
+                  "title": "Second post",
+                  "updated_at": "2026-01-01T00:00:00.000Z",
+                  "url": "/posts/second-post"
+                }
+              ],
+              "total": 2
+            },
+            "type": "collection_list"
+          },
+          {
+            "data": {
+              "heading": "Find us"
+            },
+            "id": "b3",
+            "resolved": {
+              "contact": {
+                "city": "Springfield",
+                "email": "hello@acme.example",
+                "phone": "+1 555 0100",
+                "title": "Acme"
+              }
+            },
+            "type": "contact_info"
+          },
+          {
+            "data": {
+              "attribution": "Acme",
+              "text": "Built with care."
+            },
+            "id": "p1",
+            "type": "quote"
+          }
+        ],
+        "category": null,
+        "frontmatter": {},
+        "id": 1,
+        "locale": "en",
+        "path": "home",
+        "published_at": "2026-01-01T00:00:00.000Z",
+        "seo": {
+          "meta_description": "What Acme does.",
+          "meta_title": "Acme"
+        },
+        "slug": "home",
+        "tags": [],
+        "title": "Home",
+        "translations": [],
+        "updated_at": "2026-01-01T00:00:00.000Z",
+        "url": "/"
+      },
+      {
+        "blocks": [
+          {
+            "data": {
+              "body": "We make **things**."
+            },
+            "id": "b1",
+            "type": "text"
+          }
+        ],
+        "category": null,
+        "frontmatter": {
+          "founded": "2020-01-01T00:00:00Z",
+          "team_size": 12
+        },
+        "id": 2,
+        "locale": "en",
+        "path": "about",
+        "published_at": "2026-01-01T00:00:00.000Z",
+        "seo": {
+          "canonical_url": "https://acme.example/about-us",
+          "json_ld": {
+            "@type": "Organization",
+            "name": "Acme"
+          },
+          "meta_description": "Who we are."
+        },
+        "slug": "about",
+        "tags": [],
+        "title": "About",
+        "translations": [],
+        "updated_at": "2026-01-01T00:00:00.000Z",
+        "url": "https://acme.example/about-us"
+      }
+    ]
+  },
+  "included": {
+    "assets": {
+      "1": {
+        "alt": "A blue line",
+        "byte_size": 129,
+        "content_type": "image/png",
+        "filename": "hero.png",
+        "focal_x": 0.5,
+        "focal_y": 0.5,
+        "folder": "/",
+        "height": 20,
+        "id": 1,
+        "original": "https://cms.acme.example/files/<blob>/hero.png",
+        "srcset": [
+          {
+            "descriptor": "640w",
+            "url": "https://cms.acme.example/files/<blob>/w640/hero.png",
+            "width": 640
+          },
+          {
+            "descriptor": "1280w",
+            "url": "https://cms.acme.example/files/<blob>/w1280/hero.png",
+            "width": 1280
+          },
+          {
+            "descriptor": "1920w",
+            "url": "https://cms.acme.example/files/<blob>/w1920/hero.png",
+            "width": 1920
+          }
+        ],
+        "thumb_url": "https://cms.acme.example/files/<blob>/w256/hero.png",
+        "url": "https://cms.acme.example/files/<blob>/hero.png",
+        "variants": {
+          "w1280": "https://cms.acme.example/files/<blob>/w1280/hero.png",
+          "w1920": "https://cms.acme.example/files/<blob>/w1920/hero.png",
+          "w640": "https://cms.acme.example/files/<blob>/w640/hero.png"
+        },
+        "width": 40
+      }
+    }
+  },
+  "meta": {
+    "cursor": "<cursor>",
+    "full": true,
+    "since": ""
+  }
+}

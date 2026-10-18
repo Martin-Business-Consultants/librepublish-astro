@@ -6,10 +6,9 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Martin-Business-Consultants/librepublishgo.git",
-    "directory": "packages/astro"
+    "url": "git+https://github.com/Martin-Business-Consultants/librepublish-astro.git"
   },
-  "homepage": "https://github.com/Martin-Business-Consultants/librepublishgo/tree/main/packages/astro#readme",
+  "homepage": "https://github.com/Martin-Business-Consultants/librepublish-astro#readme",
   "keywords": [
     "astro-integration",
     "withastro",
@@ -75,7 +74,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "npm run build && node --test test/*.test.js",
     "e2e": "node test/e2e/run.mjs",
-    "contracts:pin": "node test/contracts-pin.mjs"
+    "contracts:pin": "node test/contracts-pin.mjs",
+    "contracts:sync": "node scripts/contracts-sync.mjs"
   },
   "engines": {
     "node": ">=22.12.0"
@@ -92,7 +92,7 @@
     "typescript": "^5.9.0"
   },
   "bugs": {
-    "url": "https://github.com/Martin-Business-Consultants/librepublishgo/issues"
+    "url": "https://github.com/Martin-Business-Consultants/librepublish-astro/issues"
   },
   "bin": {
     "librepublish-astro": "./bin/librepublish-astro.mjs"

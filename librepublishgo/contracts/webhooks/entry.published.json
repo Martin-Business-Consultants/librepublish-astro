@@ -1,0 +1,16 @@
+{
+  "data": {
+    "collection_slug": "posts",
+    "id": 1,
+    "locale": "en",
+    "published_at": "2026-01-01T00:00:00Z",
+    "slug": "first-post",
+    "status": "published",
+    "title": "First post",
+    "updated_at": "2026-01-01T00:00:00Z",
+    "url": "https://acme.example/posts/first-post"
+  },
+  "delivered_at": "2026-01-01T00:00:00Z",
+  "event": "entry.published",
+  "tenant": "acme"
+}

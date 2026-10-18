@@ -1,0 +1,49 @@
+{
+  "data": [
+    {
+      "blocks": [
+        {
+          "data": {
+            "body": "The *brief*."
+          },
+          "id": "b1",
+          "type": "text"
+        },
+        {
+          "data": {
+            "attribution": "Acme",
+            "text": "Built with care."
+          },
+          "id": "p1",
+          "type": "quote"
+        }
+      ],
+      "body_markdown": "",
+      "category": null,
+      "collection": "projects",
+      "frontmatter": {
+        "client": "Initech",
+        "year": 2025
+      },
+      "id": 4,
+      "locale": "en",
+      "published_at": "2026-01-01T00:00:00.000Z",
+      "seo": {},
+      "slug": "alpha",
+      "tags": [],
+      "title": "Alpha",
+      "translations": [],
+      "updated_at": "2026-01-01T00:00:00.000Z",
+      "url": "/projects/alpha"
+    }
+  ],
+  "included": {
+    "assets": {}
+  },
+  "meta": {
+    "next_page": null,
+    "page": 1,
+    "per": 50,
+    "total": 1
+  }
+}

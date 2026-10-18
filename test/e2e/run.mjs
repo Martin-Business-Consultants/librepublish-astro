@@ -3,7 +3,7 @@
 // against it — then served, and pushed into every failure the integration
 // promises to catch.
 //
-//   npm run e2e                                   # builds the Go binary from this repository (needs Go)
+//   LIBREPUBLISH_REPO=../librepublishgo npm run e2e   # builds the Go binary from that checkout (needs Go)
 //   LIBREPUBLISH_BIN=/path/to/librepublish npm run e2e
 //
 // Needs `npm install` in example/ (done here when node_modules is missing)
@@ -13,7 +13,7 @@ import { spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHmac } from "node:crypto";
 import { deflateSync } from "node:zlib";
@@ -21,7 +21,7 @@ import assert from "node:assert/strict";
 
 const pkg = fileURLToPath(new URL("../../", import.meta.url));
 const example = join(pkg, "example");
-const repo = join(pkg, "../..");
+const repo = process.env.LIBREPUBLISH_REPO ? resolve(process.env.LIBREPUBLISH_REPO) : join(pkg, "../librepublishgo");
 const scratch = mkdtempSync(join(tmpdir(), "lp-e2e-"));
 const children = [];
 const cleanups = [];

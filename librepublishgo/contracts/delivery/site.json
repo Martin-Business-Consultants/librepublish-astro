@@ -1,0 +1,117 @@
+{
+  "data": {
+    "api_version": "v1",
+    "branding": {
+      "border_radius": "medium",
+      "box_shadow": "small",
+      "favicon": {
+        "alt": "A blue line",
+        "byte_size": 129,
+        "content_type": "image/png",
+        "filename": "hero.png",
+        "focal_x": 0.5,
+        "focal_y": 0.5,
+        "folder": "/",
+        "height": 20,
+        "id": 1,
+        "original": "https://cms.acme.example/files/<blob>/hero.png",
+        "srcset": [
+          {
+            "descriptor": "640w",
+            "url": "https://cms.acme.example/files/<blob>/w640/hero.png",
+            "width": 640
+          },
+          {
+            "descriptor": "1280w",
+            "url": "https://cms.acme.example/files/<blob>/w1280/hero.png",
+            "width": 1280
+          },
+          {
+            "descriptor": "1920w",
+            "url": "https://cms.acme.example/files/<blob>/w1920/hero.png",
+            "width": 1920
+          }
+        ],
+        "thumb_url": "https://cms.acme.example/files/<blob>/w256/hero.png",
+        "url": "https://cms.acme.example/files/<blob>/hero.png",
+        "variants": {
+          "w1280": "https://cms.acme.example/files/<blob>/w1280/hero.png",
+          "w1920": "https://cms.acme.example/files/<blob>/w1920/hero.png",
+          "w640": "https://cms.acme.example/files/<blob>/w640/hero.png"
+        },
+        "width": 40
+      },
+      "font": "Playfair Display",
+      "logo": {
+        "alt": "A blue line",
+        "byte_size": 129,
+        "content_type": "image/png",
+        "filename": "hero.png",
+        "focal_x": 0.5,
+        "focal_y": 0.5,
+        "folder": "/",
+        "height": 20,
+        "id": 1,
+        "original": "https://cms.acme.example/files/<blob>/hero.png",
+        "srcset": [
+          {
+            "descriptor": "640w",
+            "url": "https://cms.acme.example/files/<blob>/w640/hero.png",
+            "width": 640
+          },
+          {
+            "descriptor": "1280w",
+            "url": "https://cms.acme.example/files/<blob>/w1280/hero.png",
+            "width": 1280
+          },
+          {
+            "descriptor": "1920w",
+            "url": "https://cms.acme.example/files/<blob>/w1920/hero.png",
+            "width": 1920
+          }
+        ],
+        "thumb_url": "https://cms.acme.example/files/<blob>/w256/hero.png",
+        "url": "https://cms.acme.example/files/<blob>/hero.png",
+        "variants": {
+          "w1280": "https://cms.acme.example/files/<blob>/w1280/hero.png",
+          "w1920": "https://cms.acme.example/files/<blob>/w1920/hero.png",
+          "w640": "https://cms.acme.example/files/<blob>/w640/hero.png"
+        },
+        "width": 40
+      },
+      "primary_color": "#b45309",
+      "secondary_color": "#1c1917"
+    },
+    "contact": {
+      "city": "Springfield",
+      "email": "hello@acme.example",
+      "phone": "+1 555 0100",
+      "title": "Acme"
+    },
+    "default_locale": "en",
+    "image_widths": [
+      640,
+      1280,
+      1920
+    ],
+    "locales": [
+      "en"
+    ],
+    "name": "Acme",
+    "plugin_config": {
+      "forms": {
+        "definition": "/api/x/forms/definition?form=<slug>",
+        "list": "/api/x/forms/list",
+        "submit": "/api/x/forms/submit?form=<slug>"
+      }
+    },
+    "plugins": [
+      "forms"
+    ],
+    "url": "https://acme.example"
+  },
+  "meta": {
+    "cms_url": "https://cms.acme.example",
+    "cms_version": "dev"
+  }
+}

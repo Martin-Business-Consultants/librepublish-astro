@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { verify } from "../dist/runtime/signature.js";
 import { plan } from "../dist/runtime/purge.js";
 
-const contract = JSON.parse(readFileSync(new URL("../../../contracts/webhook_contract.json", import.meta.url), "utf8")).webhook;
+const contract = JSON.parse(readFileSync(new URL("../librepublishgo/contracts/webhook_contract.json", import.meta.url), "utf8")).webhook;
 const sign = (body, secret) => `sha256=${createHmac("sha256", secret).update(body).digest("hex")}`;
 
 test("the signature is the contract's: X-CMS-Signature, sha256=<hex HMAC-SHA256 of the raw body>", async () => {

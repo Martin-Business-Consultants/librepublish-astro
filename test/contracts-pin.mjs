@@ -1,4 +1,4 @@
-// The contract files (contracts/**, but its README) this package was last
+// The contract files (librepublishgo/contracts/**, but its README) this package was last
 // checked against, by SHA-256: test/contracts.sha256. test/contract.test.js
 // fails when contracts/ differs from it, so a change to the API's fixtures
 // can't pass CI without a change here too.
@@ -9,7 +9,7 @@ import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export const contractsDir = fileURLToPath(new URL("../../../contracts/", import.meta.url));
+export const contractsDir = fileURLToPath(new URL("../librepublishgo/contracts/", import.meta.url));
 export const pinFile = fileURLToPath(new URL("./contracts.sha256", import.meta.url));
 
 /** Each contract file's sha256, as `<hex>  <path>` lines sorted by path (sha256sum's format). */
