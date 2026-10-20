@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createClient, CmsError } from "../dist/client.js";
-import { healthFindings } from "../dist/build-checks.js";
+import { healthFindings, redirectRules, REDIRECTS_LIVE_IN_THE_CMS } from "../dist/build-checks.js";
+import cms from "../dist/index.js";
 import { envelope, fakeFetch, fixture } from "./helpers.js";
 
 test("the client sends the token, collects cache tags and schema digests", async () => {
@@ -162,4 +163,26 @@ test("the delivery fixtures have the shapes the runtime routes read", () => {
   assert.equal(typeof site.meta.cms_version, "string");
   assert.equal(site.data.plugin_config.forms.list, "/api/x/forms/list");
   assert.ok(Array.isArray(fixture("delivery", "redirects").data));
+});
+
+test("redirects live in the CMS: a site's own rules are found, comments aren't", () => {
+  assert.deepEqual(redirectRules(""), []);
+  assert.deepEqual(redirectRules("# a comment\n\n   \n# From the CMS (Tools › Redirects)\n"), []);
+  assert.deepEqual(redirectRules("/old /new 301\n# note\n  /a/* /b/:splat 302  \n"), ["/old /new 301", "/a/* /b/:splat 302"]);
+});
+
+test("redirects live in the CMS: cms({ redirects }) is refused", () => {
+  assert.throws(() => cms({ redirects: false }), (e) => e.message.includes(REDIRECTS_LIVE_IN_THE_CMS));
+  assert.throws(() => cms({ redirects: true }), /is gone/);
+  assert.doesNotThrow(() => cms({}));
+});
+
+test("redirects live in the CMS: astro.config's redirects stop the build", async () => {
+  const hook = cms({}).hooks["astro:config:setup"];
+  const args = (redirects) => ({
+    config: { root: new URL("file:///tmp/site/"), trailingSlash: "ignore", redirects },
+    command: "build", updateConfig() {}, injectRoute() {}, addMiddleware() {}, addWatchFile() {},
+    logger: { info() {}, warn() {}, error() {} },
+  });
+  await assert.rejects(hook(args({ "/old": "/new" })), (e) => e.message.includes(REDIRECTS_LIVE_IN_THE_CMS) && e.message.includes("/old"));
 });

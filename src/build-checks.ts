@@ -22,3 +22,17 @@ export async function siteFindings(dir: URL): Promise<Finding[]> {
 export function healthFindings(checks: CmsHealthCheck[]): Finding[] {
   return checks.filter((check) => check.state === "fails").map((check) => ({ title: check.key.replace(/_/g, " "), detail: check.message }));
 }
+
+/**
+ * Redirects live in the CMS (Tools › Redirects) and nowhere else: the build
+ * writes them to _redirects, and a site that defines its own — Astro's
+ * `redirects`, or rules in public/_redirects — stops the build. Two places to
+ * keep a redirect means one of them goes stale; the CMS is the one editors see.
+ */
+export const REDIRECTS_LIVE_IN_THE_CMS =
+  "Redirects live in the CMS (Tools › Redirects), not in the site. Move them there and remove them from the site";
+
+/** The rules a _redirects file holds, ignoring comments and blank lines. */
+export function redirectRules(text: string): string[] {
+  return text.split("\n").map((line) => line.trim()).filter((line) => line && !line.startsWith("#"));
+}

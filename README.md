@@ -22,7 +22,7 @@ written against its APIs, so the two move together:
   browser by one generic validator, errors from the CMS beside each field,
   and it still works without JavaScript.
 - **Site files.** `/sitemap.xml`, `/robots.txt` and Cloudflare `_redirects`,
-  all from the CMS.
+  all from the CMS. Redirects live in the CMS and nowhere else.
 - **Publishing.** A static site is rebuilt when content is published. An
   on-demand site gets a signed purge at `/_cms/webhook` instead, and every
   response carries a `Cache-Tag`.
@@ -154,6 +154,13 @@ then fails until the site handles the change.
 - **Type generation is fatal in a build.** If the types can't be generated,
   `astro build` and `astro check` stop.
 - **Forms can't go stale.** `<Form>` on a prerendered page stops the build.
+- **Redirects live in the CMS (Tools › Redirects), and only there.** After a
+  build, `_redirects` holds the CMS's rules and nothing else. A site that
+  defines its own stops the build: a `redirects` map in `astro.config`, or
+  rules in `public/_redirects` (comments are fine). Two places to keep a
+  redirect means one goes stale, and the CMS is the one editors can see — so
+  a renamed URL, a retired page or a withheld one is a CMS redirect, never a
+  line in the repo.
 - **Pages rendered on demand** compare the digest the CMS sends with the one
   they were built with; a mismatch is logged once and the response carries
   `X-CMS-Schema-Stale`. Live collections check each record against the
@@ -488,7 +495,6 @@ what fails. `cms({ siteHealth: "error" })` makes a failing check stop the build.
 | `url`, `token` | `CMS_BASE_URL`, `CMS_API_TOKEN` | Where the CMS is, and the site's service token. |
 | `i18n` | `true` | Sets up Astro's i18n from the CMS's locales. Every locale except the default gets a path prefix. |
 | `sitemap` | `true` | Adds `/sitemap.xml`, and `/robots.txt` unless `public/robots.txt` exists. The sitemap's URLs follow the site's `trailingSlash` (`always` or `never`), so they match its canonicals. After a build, the sitemap keeps only the URLs the site serves (its built pages and on-demand routes), and warns about the rest. |
-| `redirects` | `true` | After a build, writes the CMS's redirects into `_redirects`, after the site's own rules. |
 | `siteHealth` | `"warn"` | `"error"` stops the build on a failing check; `"off"` skips the checks. |
 | `report` | `true` | Tells the CMS about each build (`POST /api/frontend/builds`): how the site renders, its webhook, and the content cursor it built from. |
 
@@ -509,6 +515,15 @@ what fails. `cms({ siteHealth: "error" })` makes a failing check stop the build.
 | `@librepublish/astro/components/*.astro` | `Blocks`, `Image`, `RichText`, `BrandStyles`, `Seo`, `Form`. |
 | `librepublish:types` | Generated from the CMS's schema. |
 | `npx librepublish-astro sync\|check` | The schema lock. |
+
+## Changes in 0.6.0
+
+- **Redirects live in the CMS, and only there.** `_redirects` is written
+  from the CMS on every build, with nothing of the site's own: Astro's
+  `redirects` or rules in `public/_redirects` stop the build, naming them.
+  Move them to Tools › Redirects.
+- The `redirects` option is gone (it turned the CMS's redirects off);
+  passing it is an error.
 
 ## Changes in 0.3.4
 

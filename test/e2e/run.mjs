@@ -10,7 +10,7 @@
 // and `npm run build` in the package. Leaves nothing behind but
 // example/dist, example/.astro and example/cms.lock.json (git-ignored).
 import { spawn, spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -170,7 +170,7 @@ try {
     assert.match(read("index.html"), /<nav><img src="[^"]*\/hero\.png"/, "the logo");
     assert.match(read("sitemap.xml"), /<loc>https:\/\/site\.test\/about<\/loc>/);
     assert.match(read("robots.txt"), /Sitemap: /);
-    assert.match(read("_redirects"), /# From the CMS/);
+    assert.match(read("_redirects"), /^# From the CMS/, "_redirects holds the CMS's rules and nothing of the site's");
     const types = readFileSync(join(example, ".astro/integrations/librepublish/cms.d.ts"), "utf8");
     assert.match(types, /declare module "librepublish:types"/);
     assert.ok(types.includes(locked.schema_digest));
@@ -220,6 +220,17 @@ try {
   cleanups.push(() => rmSync(misuse, { force: true }));
   assert.match(run("npx", ["astro", "build"], { env, fail: true }), /<Form slug="contact"> is on a prerendered page/);
   unlinkSync(misuse);
+
+  step("a redirect defined in the site stops the build");
+  const publicDir = join(example, "public");
+  const hadPublic = existsSync(publicDir);
+  mkdirSync(publicDir, { recursive: true });
+  const ownRedirects = join(publicDir, "_redirects");
+  writeFileSync(ownRedirects, "# a site-side rule\n/old-page /new-page 301\n");
+  cleanups.push(() => { rmSync(ownRedirects, { force: true }); if (!hadPublic) rmSync(publicDir, { recursive: true, force: true }); });
+  assert.match(run("npx", ["astro", "build"], { env, fail: true }), /Redirects live in the CMS[\s\S]*public\/_redirects defines 1 \(\/old-page \/new-page 301\)/);
+  rmSync(ownRedirects, { force: true });
+  if (!hadPublic) rmSync(publicDir, { recursive: true, force: true });
 
   step("the CMS's schema moves: build, astro check and sync stop");
   await api("POST", "/api/block_types", { block_type: { slug: "promo", label: "Promo", fields: [{ name: "headline", label: "Headline", type: "string", required: true }] } });

@@ -26,7 +26,8 @@
  * and after `astro build`:
  *
  *   - stops if any answer during the build carried another schema digest;
- *   - writes the CMS's redirects as Cloudflare's _redirects;
+ *   - writes the CMS's redirects as Cloudflare's _redirects — the only place a
+ *     site's redirects come from (a site defining its own stops the build);
  *   - checks the site against Site health and its own basics;
  *   - tells the CMS the build ran and how the site renders (static, server or
  *     hybrid), so publishing rebuilds a static site, purges one that renders
@@ -41,7 +42,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { AstroIntegration } from "astro";
 import { envField } from "astro/config";
-import { healthFindings, siteFindings, type Finding } from "./build-checks.js";
+import { healthFindings, siteFindings, type Finding, REDIRECTS_LIVE_IN_THE_CMS, redirectRules } from "./build-checks.js";
 import type { CmsClient } from "./client.js";
 import { buildClient, buildState, keepConnection, keepSchema, resolveConnection, type Connection } from "./connection.js";
 import { lastCursor } from "./loaders.js";
@@ -64,8 +65,6 @@ export interface CmsOptions {
   i18n?: boolean;
   /** Add /sitemap.xml and /robots.txt. Default: true. */
   sitemap?: boolean;
-  /** Write the CMS's redirects to _redirects after a build. Default: true. */
-  redirects?: boolean;
   /** What failing Site health checks do to a build. Default: "warn". */
   siteHealth?: "warn" | "error" | "off";
   /** Report each build to the CMS. Default: true. */
@@ -73,7 +72,10 @@ export interface CmsOptions {
 }
 
 export default function cms(options: CmsOptions = {}): AstroIntegration {
-  const { i18n = true, sitemap = true, redirects = true, siteHealth = "warn", report = true } = options;
+  const { i18n = true, sitemap = true, siteHealth = "warn", report = true } = options;
+  if ("redirects" in options) {
+    throw new Error(`cms({ redirects }) is gone: the CMS's redirects are always written. ${REDIRECTS_LIVE_IN_THE_CMS}.`);
+  }
   let connection: Connection | null = null;
   let client: CmsClient | null = null;
   let site: { data: CmsSite; meta: CmsSiteMeta } | null = null;
@@ -97,6 +99,10 @@ export default function cms(options: CmsOptions = {}): AstroIntegration {
         startedAt = Date.now();
         command = given;
         trailingSlash = config.trailingSlash;
+        const own = Object.keys(config.redirects ?? {});
+        if (own.length) {
+          throw new Error(`${REDIRECTS_LIVE_IN_THE_CMS}: astro.config's \`redirects\` defines ${own.length} (${own.slice(0, 3).join(", ")}${own.length > 3 ? ", …" : ""}).`);
+        }
         const root = fileURLToPath(config.root);
         connection = resolveConnection(root, command === "dev" ? "development" : "production", options);
 
@@ -221,14 +227,18 @@ export default function cms(options: CmsOptions = {}): AstroIntegration {
         // With an adapter the static files (and _redirects) go to the client directory.
         const assetsDir = onDemand && clientDir ? clientDir : dir;
 
-        if (redirects) {
-          const rules = await client.redirectsFile();
+        // _redirects is the CMS's alone. Rules already in it came from the
+        // site (public/_redirects, or an adapter writing Astro's `redirects`).
+        {
           const file = new URL("_redirects", assetsDir);
-          const own = await readFile(file, "utf8").catch(() => "");
           const marker = "# From the CMS (Tools › Redirects)";
-          const kept = own.split(marker)[0].trimEnd();
-          await writeFile(file, `${kept}${kept ? "\n\n" : ""}${marker}\n${rules}`);
-          logger.info(`_redirects: ${rules.split("\n").filter(Boolean).length} rules from the CMS`);
+          const own = redirectRules((await readFile(file, "utf8").catch(() => "")).split(marker)[0]);
+          if (own.length) {
+            throw new Error(`${REDIRECTS_LIVE_IN_THE_CMS}: public/_redirects defines ${own.length} (${own.slice(0, 2).join("; ")}${own.length > 2 ? "; …" : ""}).`);
+          }
+          const rules = await client.redirectsFile();
+          await writeFile(file, `${marker}\n${rules}`);
+          logger.info(`_redirects: ${redirectRules(rules).length} rules from the CMS`);
         }
 
         if (sitemap) {
