@@ -399,6 +399,35 @@ export const POST = formHook(async (submission) => {
 The post is `contracts/forms/form-hook-request.json`, signed like a webhook
 (`X-CMS-Signature: sha256=<hex HMAC-SHA256 of the body>`).
 
+The handler's third argument reports what it did, for the CMS's hook log and
+the submission (Forms › Hook log), and says when the post is a test:
+
+```ts
+export const POST = formHook(async (submission, _context, hook) => {
+  const zip = answer(submission, "zip");
+  if (!(await served(zip))) {
+    hook.step("Zip check", "failed", `${zip} isn't served`);
+    throw new FormHookRefusal("We don't serve that zip yet.", { zip: ["isn't in our service area"] });
+  }
+  hook.step("Zip check", "ok", `${zip} served`);
+  if (hook.test) {
+    hook.step("Quote", "skipped", "Test hook: no real quote");
+    return {};
+  }
+  const quote = await createQuote(submission.values);
+  hook.step("Quote", "ok", quote.id);
+  return { redirect: `/quote?q=${quote.id}`, values: { quote_id: quote.id } };
+});
+```
+
+- `hook.step(label, status, detail?)`: `status` is `ok`, `failed`,
+  `skipped`, `warning` or `info`. The steps go back with every answer, a
+  refusal or a failure too (a throw adds a failed `Hook` step with its
+  message), so the CMS sees how far it got.
+- `hook.test`: set for **Test hook** in the form's Testing tab (the post's
+  `"test": true`, `X-CMS-Test: 1`). Nothing is kept, so skip what a test
+  shouldn't do.
+
 ## Pages rendered on demand
 
 The build tells the CMS how the site renders. A **static** site (no adapter,

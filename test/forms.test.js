@@ -201,3 +201,38 @@ test("formHook: a refusal is a 422 with errors by field; a bad signature, anothe
   }
   assert.deepEqual(await (await formHook(() => undefined, { secret: "contract-secret" })(hookPost())).json(), {});
 });
+
+test("formHook: steps go back with every answer; hook.test says it's a test", async () => {
+  const steps = (zip) => formHook((submission, _context, hook) => {
+    hook.step("Zip check", zip ? "ok" : "failed", zip || "not served");
+    if (!zip) throw new FormHookRefusal("No.", { zip: ["isn't served"] });
+    if (hook.test) {
+      hook.step("Quote", "skipped", "a test");
+      return { steps: [{ label: "Extra", status: "info" }] };
+    }
+    return { redirect: "/q" };
+  }, { secret: "contract-secret" });
+  const ok = await (await steps("32207")(hookPost())).json();
+  assert.deepEqual(ok, { redirect: "/q", steps: [{ label: "Zip check", status: "ok", detail: "32207" }] });
+  const refused = await steps("")(hookPost());
+  assert.equal(refused.status, 422);
+  assert.deepEqual((await refused.json()).steps, [{ label: "Zip check", status: "failed", detail: "not served" }]);
+
+  const testBody = JSON.stringify({ ...fixture("forms", "form-hook-request"), test: true });
+  const tested = await (await steps("32207")(hookPost("contract-secret", testBody))).json();
+  assert.deepEqual(tested.steps.map((s) => s.label), ["Zip check", "Quote", "Extra"]);
+
+  // A throw says how far it got.
+  const original = console.error;
+  console.error = () => {};
+  try {
+    const broken = formHook((_s, _c, hook) => { hook.step("Zip check", "ok"); throw new Error("gofuse is down"); }, { secret: "contract-secret" });
+    const res = await broken(hookPost());
+    assert.equal(res.status, 500);
+    assert.deepEqual((await res.json()).steps, [{ label: "Zip check", status: "ok" }, { label: "Hook", status: "failed", detail: "gofuse is down" }]);
+  } finally {
+    console.error = original;
+  }
+  // No steps, no key: the answer is as it was.
+  assert.deepEqual(await (await formHook(() => ({ redirect: "/x" }), { secret: "contract-secret" })(hookPost())).json(), { redirect: "/x" });
+});

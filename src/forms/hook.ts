@@ -9,13 +9,25 @@
  *   // src/pages/api/quote-hook.ts
  *   import { formHook, FormHookRefusal } from "@librepublish/astro/forms/hook";
  *   export const prerender = false;
- *   export const POST = formHook(async (submission) => {
+ *   export const POST = formHook(async (submission, context, hook) => {
  *     if (!(await served(submission.values.zip))) {
+ *       hook.step("Zip check", "failed", `${submission.values.zip} isn't served`);
  *       throw new FormHookRefusal("We don't serve that zip yet.", { zip: ["isn't in our service area"] });
  *     }
+ *     hook.step("Zip check", "ok");
+ *     if (hook.test) {
+ *       hook.step("Quote", "skipped", "a test");
+ *       return {};
+ *     }
  *     const quote = await createQuote(submission.values);
+ *     hook.step("Quote", "ok", quote.id);
  *     return { redirect: `/quote?q=${quote.id}`, values: { quote_id: quote.id } };
  *   });
+ *
+ * The steps go back with the answer, a refusal or a failure too, and the CMS
+ * shows them (its hook log, and the submission) as they're written: it
+ * doesn't know what a zip check is. `hook.test` is set for Test hook (the
+ * form's Testing tab): skip what a test shouldn't do.
  *
  * The secret is CMS_FORM_HOOK_SECRET (a Worker secret on Cloudflare), or
  * `secret` in the options. A post that isn't signed with it is refused (401)
@@ -34,6 +46,28 @@ export interface FormSubmission {
   submission_id: string;
   submitted_at: string;
   values: Record<string, string | string[]>;
+  /** Set for a test (Test hook, in the form's Testing tab): nothing is kept, so don't do what a real one would. */
+  test?: boolean;
+}
+
+/** How a step went. */
+export type FormHookStepStatus = "ok" | "failed" | "skipped" | "warning" | "info";
+
+/** Something the hook did, as the CMS shows it in its hook log and on the submission. */
+export interface FormHookStep {
+  label: string;
+  status: FormHookStepStatus;
+  detail?: string;
+}
+
+/** The handler's third argument: whether it's a test, and its steps. */
+export interface FormHookTools {
+  /** Set for Test hook: skip what a test shouldn't do (create a real quote). */
+  readonly test: boolean;
+  /** Notes a step; they go back with the answer, whatever it is. */
+  step(label: string, status: FormHookStepStatus, detail?: string): void;
+  /** The steps noted so far. */
+  readonly steps: FormHookStep[];
 }
 
 /** What a hook answers, every key optional. */
@@ -44,6 +78,8 @@ export interface FormHookAnswer {
   message?: string;
   /** Kept with the submission: shown with it, in its CSV, and merge tags in its emails ({{ quote_id }}). Names are a-z, 0-9 and _. */
   values?: Record<string, string | number | boolean>;
+  /** Steps besides those noted with hook.step, after them. */
+  steps?: FormHookStep[];
 }
 
 /** Thrown by a handler to refuse the submission: the visitor sees the message, and each error beside its field. */
@@ -61,7 +97,7 @@ export interface FormHookOptions {
   forms?: string[];
 }
 
-type Handler<C> = (submission: FormSubmission, context: C) => FormHookAnswer | void | Promise<FormHookAnswer | void>;
+type Handler<C> = (submission: FormSubmission, context: C, hook: FormHookTools) => FormHookAnswer | void | Promise<FormHookAnswer | void>;
 
 /** An Astro endpoint (`export const POST = formHook(…)`) that checks the CMS's signature, then runs the handler. */
 export function formHook<C extends { request: Request }>(handler: Handler<C>, options: FormHookOptions = {}) {
@@ -86,13 +122,25 @@ export function formHook<C extends { request: Request }>(handler: Handler<C>, op
       return json({ error: `not a hook for the form "${submission.form}"` }, 404);
     }
 
+    const steps: FormHookStep[] = [];
+    const tools: FormHookTools = {
+      test: submission.test === true || context.request.headers.get("X-CMS-Test") === "1",
+      step(label, status, detail) {
+        steps.push(detail === undefined || detail === "" ? { label, status } : { label, status, detail: String(detail) });
+      },
+      get steps() { return steps; },
+    };
+    const withSteps = <T extends object>(body: T, more: FormHookStep[] = []) => {
+      const all = [...steps, ...more];
+      return all.length ? { ...body, steps: all } : body;
+    };
     try {
-      const answer = (await handler(submission, context)) ?? {};
-      return json(answer, 200);
+      const { steps: more, ...answer } = (await handler(submission, context, tools)) ?? {};
+      return json(withSteps(answer, more), 200);
     } catch (error) {
-      if (error instanceof FormHookRefusal) return json({ message: error.message, errors: error.errors }, 422);
+      if (error instanceof FormHookRefusal) return json(withSteps({ message: error.message, errors: error.errors }), 422);
       console.error(`[librepublish] form hook for "${submission.form}" failed:`, error);
-      return json({ error: "the hook failed" }, 500);
+      return json(withSteps({ error: "the hook failed" }, [{ label: "Hook", status: "failed", detail: error instanceof Error ? error.message : String(error) }]), 500);
     }
   };
 }
