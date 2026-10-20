@@ -50,6 +50,13 @@ export interface FormSubmission {
   test?: boolean;
 }
 
+/** One row of a table value: a price breakdown's line; `strong` for a total. */
+export interface FormHookRow {
+  label: string;
+  value: string;
+  strong?: boolean;
+}
+
 /** How a step went. */
 export type FormHookStepStatus = "ok" | "failed" | "skipped" | "warning" | "info";
 
@@ -76,8 +83,13 @@ export interface FormHookAnswer {
   redirect?: string;
   /** Shown to the visitor instead of the form's thank-you message. */
   message?: string;
-  /** Kept with the submission: shown with it, in its CSV, and merge tags in its emails ({{ quote_id }}). Names are a-z, 0-9 and _. */
-  values?: Record<string, string | number | boolean>;
+  /**
+   * Kept with the submission: shown with it, in its CSV, merge tags in its
+   * emails ({{ quote_id }}), and to webhooks as hook.<name>. Names are a-z,
+   * 0-9 and _. A value can be a table (rows: a price breakdown), which an
+   * HTML email draws as one ({{ pricing }}), and text shows a line a row.
+   */
+  values?: Record<string, string | number | boolean | FormHookRow[]>;
   /** Steps besides those noted with hook.step, after them. */
   steps?: FormHookStep[];
 }

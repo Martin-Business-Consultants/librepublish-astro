@@ -233,6 +233,10 @@ test("formHook: steps go back with every answer; hook.test says it's a test", as
   } finally {
     console.error = original;
   }
+  // A table value goes back as it is, for the CMS to draw.
+  const pricing = [{ label: "16 ft container", value: "$189/mo" }, { label: "Due before delivery", value: "$278", strong: true }];
+  const priced = await (await formHook(() => ({ values: { pricing, monthly_price: "$189" } }), { secret: "contract-secret" })(hookPost())).json();
+  assert.deepEqual(priced.values, { pricing, monthly_price: "$189" });
   // No steps, no key: the answer is as it was.
   assert.deepEqual(await (await formHook(() => ({ redirect: "/x" }), { secret: "contract-secret" })(hookPost())).json(), { redirect: "/x" });
 });

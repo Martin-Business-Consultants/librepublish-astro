@@ -424,7 +424,12 @@ export const POST = formHook(async (submission, _context, hook) => {
   `skipped`, `warning` or `info`. The steps go back with every answer, a
   refusal or a failure too (a throw adds a failed `Hook` step with its
   message), so the CMS sees how far it got.
-- `hook.test`: set for **Test hook** in the form's Testing tab (the post's
+- A value can be a table, a list of `{ label, value, strong? }` rows (a
+  price breakdown): `values: { pricing: [{ label: "16 ft container", value:
+  "$189/mo" }, { label: "Due before delivery", value: "$278", strong: true
+  }] }`. An HTML email draws `{{ pricing }}` as a table; text, the CSV and
+  the submission show a line a row; a webhook gets the rows.
+- `hook.test`: set for **Test hook** and **Send test** in the form's Testing tab (the post's
   `"test": true`, `X-CMS-Test: 1`). Nothing is kept, so skip what a test
   shouldn't do.
 
