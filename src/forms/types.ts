@@ -33,6 +33,16 @@ export interface FieldRules {
   options?: string[];
 }
 
+/**
+ * A field shown only when an earlier field's answer is one of `values` (a
+ * consent checkbox's answer is "yes"). Hidden, it isn't asked for: not
+ * required, and the CMS drops whatever is posted for it.
+ */
+export interface ShowIf {
+  field: string;
+  values: string[];
+}
+
 export interface FormField {
   type: FieldType;
   /** What the site posts it as; "" on a heading. */
@@ -53,6 +63,8 @@ export interface FormField {
   max_length?: number;
   accept?: string;
   max_mb?: number;
+  /** Shown only when another field's answer says so. */
+  show_if?: ShowIf;
   rules?: FieldRules;
 }
 

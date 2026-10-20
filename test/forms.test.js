@@ -1,7 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { check, postedFrom, sentence, validate } from "../dist/forms/rules.js";
+import { createHmac } from "node:crypto";
+import { check, postedFrom, sentence, shown, validate } from "../dist/forms/rules.js";
+import { answer, formHook, FormHookRefusal } from "../dist/forms/hook.js";
 import { clientRules } from "../dist/forms/definition.js";
 import { FIELD_TYPES } from "../dist/forms/types.js";
 import { contractIndex, fixture } from "./helpers.js";
@@ -126,4 +128,76 @@ test("the Forms plugin's list and answers have the shapes <Form> and the lock re
   assert.equal(typeof form.digest, "string");
   assert.equal(typeof form.spam.min_seconds, "number");
   assert.ok("honeypot_field" in form.spam && "timestamp_field" in form.spam && "captcha" in form.spam);
+});
+
+test("a field shown only for some answers is checked only when they're given (show_if)", () => {
+  const conditional = form.fields.find((f) => f.show_if);
+  assert.ok(conditional, "the contract's definition has a field with show_if");
+  assert.deepEqual(field(conditional.name).show_if, conditional.show_if, "clientRules carries it");
+  const { field: controller, values } = conditional.show_if;
+  // The submission the server took left it out, its condition unmet; it's required when it's met.
+  assert.deepEqual(validate(fields, postedBody("form-submit-200")), {});
+  const met = postedBody("form-submit-200");
+  met.values[controller] = [values[0]];
+  assert.deepEqual(validate(fields, met)[conditional.name], ["can't be blank"]);
+  assert.equal(shown(fields, met).has(conditional.name), true);
+  assert.equal(shown(fields, postedBody("form-submit-200")).has(conditional.name), false);
+});
+
+test("shown: a condition naming a hidden field hides its field too, as the CMS has it", () => {
+  const chain = [
+    { name: "service", type: "radio" },
+    { name: "in_state", type: "checkbox", show_if: { field: "service", values: ["Move"] } },
+    { name: "note", type: "text", show_if: { field: "in_state", values: ["yes"] } },
+  ];
+  assert.deepEqual([...shown(chain, one({ service: "Move", in_state: "yes" }))], ["service", "in_state", "note"]);
+  assert.deepEqual([...shown(chain, one({ service: "Keep", in_state: "yes" }))], ["service"]);
+  assert.deepEqual([...shown(chain, one({ service: " Move " }))], ["service", "in_state"]);
+});
+
+/** The contract's hook post: its body and headers, signed as the CMS signs it ("contract-secret"). */
+function hookPost(secret = "contract-secret", body = JSON.stringify(fixture("forms", "form-hook-request"))) {
+  const headers = contractIndex()["forms/form-hook-request.json"].headers;
+  const signature = `sha256=${createHmac("sha256", secret).update(body).digest("hex")}`;
+  return { request: new Request("https://acme.example/api/hook", { method: "POST", body, headers: { "Content-Type": headers["Content-Type"], "X-CMS-Form": headers["X-CMS-Form"], [Object.keys(headers).find((h) => /signature/i.test(h))]: signature } }) };
+}
+
+test("formHook: the contract's post reaches the handler; its answer is the CMS's to read", async () => {
+  const recorded = fixture("forms", "form-hook-request");
+  let seen;
+  const route = formHook((submission) => {
+    seen = submission;
+    return { redirect: `/quote?q=Q-1&zip=${answer(submission, "to_zip")}`, values: { quote_id: "Q-1" } };
+  }, { secret: "contract-secret" });
+  const res = await route(hookPost());
+  assert.equal(res.status, 200);
+  assert.deepEqual(await res.json(), { redirect: "/quote?q=Q-1&zip=32207", values: { quote_id: "Q-1" } });
+  assert.deepEqual(seen, recorded);
+  assert.equal(seen.event, "submission.created");
+  // What the CMS answered the visitor with that redirect.
+  assert.equal(fixture("forms", "form-submit-hook-200").redirect, "/quote?q=Q-1");
+});
+
+test("formHook: a refusal is a 422 with errors by field; a bad signature, another form or a throw aren't answers", async () => {
+  const refuse = formHook(() => { throw new FormHookRefusal("We don't serve that zip yet.", { to_zip: ["isn't in our service area"] }); }, { secret: "contract-secret" });
+  const refused = await refuse(hookPost());
+  assert.equal(refused.status, 422);
+  assert.deepEqual(await refused.json(), { message: "We don't serve that zip yet.", errors: { to_zip: ["isn't in our service area"] } });
+
+  let ran = false;
+  const route = formHook(() => { ran = true; }, { secret: "contract-secret", forms: ["contact"] });
+  assert.equal((await route(hookPost("wrong-secret"))).status, 401);
+  assert.equal((await route(hookPost("contract-secret", "{}"))).status, 400);
+  assert.equal((await route(hookPost())).status, 404, "a hook for another form");
+  assert.equal(ran, false);
+
+  const broken = formHook(() => { throw new Error("gofuse is down"); }, { secret: "contract-secret" });
+  const original = console.error;
+  console.error = () => {};
+  try {
+    assert.equal((await broken(hookPost())).status, 500);
+  } finally {
+    console.error = original;
+  }
+  assert.deepEqual(await (await formHook(() => undefined, { secret: "contract-secret" })(hookPost())).json(), {});
 });

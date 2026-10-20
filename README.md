@@ -353,6 +353,12 @@ export const prerender = false;
   `form` are reserved: the CMS won't let a field take those names.
 - **A closed form** says it isn't taking submissions (the CMS answers a post
   `410`).
+- **Fields shown only for some answers** (the builder's "Show only when",
+  `show_if` in the definition): drawn hidden and disabled until the answers
+  that show them are given, and shown as they are. Hidden, a field isn't
+  checked or posted, as the CMS has it.
+- **`id`** names the form when the page has it more than once
+  (`<Form slug="quote" id="quote-mobile" />`); `cms-form-<slug>` by default.
 - There are no field components to build a form by hand: change a form in
   the CMS, not in the site.
 
@@ -360,6 +366,38 @@ The browser posts straight to the CMS, so the site's origin must be allowed
 (Settings › General). It's unstyled beyond layout: style the `cms-form__*`
 classes and the form's `data-state` (idle, sending, sent, failed). Don't cache
 a page with a form at the edge.
+
+### A form's hook
+
+A form can hear from the site before the CMS keeps and emails a submission
+(the form's Hook tab in the CMS: an address on the site and a signing
+secret). The site's answer can send the visitor to another page, add values
+to the submission (merge tags in its emails, columns in its CSV), or refuse
+it with errors beside its fields. `formHook` is that endpoint: it checks the
+CMS's signature (`CMS_FORM_HOOK_SECRET`, or `secret`) and hands the handler
+the submission.
+
+```ts
+// src/pages/api/quote-hook.ts
+import { answer, formHook, FormHookRefusal } from "@librepublish/astro/forms/hook";
+export const prerender = false;
+
+export const POST = formHook(async (submission) => {
+  const zip = answer(submission, "zip");
+  if (!(await served(zip))) throw new FormHookRefusal("We don't serve that zip yet.", { zip: ["isn't in our service area"] });
+  const quote = await createQuote(submission.values);
+  return { redirect: `/quote?q=${quote.id}`, values: { quote_id: quote.id } };
+}, { forms: ["quote"] });
+```
+
+| Answer | The visitor |
+|---|---|
+| `{ redirect, message, values }` (each optional) | goes to `redirect` (a path, or an address on the site's origins), or sees `message`, instead of the form's own thank-you |
+| `throw new FormHookRefusal(message, { field: [error] })` | sees the message and each error beside its field; nothing is kept |
+| anything else thrown, or the site down (the CMS waits 6 s) | gets the form's own thank-you: the submission is kept and emailed as usual |
+
+The post is `contracts/forms/form-hook-request.json`, signed like a webhook
+(`X-CMS-Signature: sha256=<hex HMAC-SHA256 of the body>`).
 
 ## Pages rendered on demand
 
@@ -431,11 +469,24 @@ what fails. `cms({ siteHealth: "error" })` makes a failing check stop the build.
 | `@librepublish/astro/rich-text` | `renderRichText`, `isSafeHref`. |
 | `@librepublish/astro/branding` | `brandingCss`, `brandingFontHref`, `checkedBranding`, `hexColor`, `isLight`. |
 | `@librepublish/astro/forms` | `formDefinition` and the form types. |
-| `@librepublish/astro/forms/rules` | The generic validator `<Form>` runs: `validate`, `check`, `postedFrom`. |
+| `@librepublish/astro/forms/rules` | The generic validator `<Form>` runs: `validate`, `check`, `shown`, `postedFrom`. |
+| `@librepublish/astro/forms/hook` | `formHook`, `FormHookRefusal`, `answer`: a form's hook endpoint. |
 | `@librepublish/astro/schema` | `buildSchemas`: the CMS's JSON Schema as Zod. |
 | `@librepublish/astro/components/*.astro` | `Blocks`, `Image`, `RichText`, `BrandStyles`, `Seo`, `Form`. |
 | `librepublish:types` | Generated from the CMS's schema. |
 | `npx librepublish-astro sync\|check` | The schema lock. |
+
+## Changes in 0.3.4
+
+- Fields shown only for some answers (`show_if`, librepublishgo's Forms
+  1.2): `<Form>` draws them hidden and disabled until the answers that show
+  them are given, and the validator skips them while hidden (`shown`).
+- `formHook` (`@librepublish/astro/forms/hook`): the endpoint a form's hook
+  posts to, its signature checked (`CMS_FORM_HOOK_SECRET`, a new optional
+  env secret): redirect the visitor, add values, or refuse with errors.
+- `<Form id>`, for a page with the same form twice.
+- The contract's `submission.created` webhook is ignored by `/_cms/webhook`
+  (nothing to purge).
 
 ## Changes in 0.3.3
 

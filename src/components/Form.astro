@@ -23,17 +23,24 @@
  * the CMS sends the visitor back with ?form=<slug>&form_status=sent|error, or
  * to the form's thank-you page.
  *
+ * A field the CMS shows only for some answers (`show_if`) is drawn hidden
+ * and disabled until they're given, and shown as they are; hidden, it isn't
+ * checked or posted.
+ *
  * Unstyled beyond layout: classes are cms-form__*, and the form's
- * data-state is idle, sending, sent or failed.
+ * data-state is idle, sending, sent or failed. `id` names the form when one
+ * is on the page more than once (cms-form-<slug> by default).
  */
 import { clientRules, formDefinition, type FormField } from "@librepublish/astro/forms";
+import { shown } from "@librepublish/astro/forms/rules";
 
 interface Props {
   slug: string;
   class?: string;
+  id?: string;
 }
 
-const { slug, class: className } = Astro.props;
+const { slug, class: className, id: givenId } = Astro.props;
 if (Astro.isPrerendered) {
   throw new Error(
     `<Form slug="${slug}"> is on a prerendered page (${Astro.url.pathname}). A form renders on demand from its live definition: ` +
@@ -45,7 +52,7 @@ if (Astro.isPrerendered) {
 // the edge either, or the form there goes stale.)
 const form = await formDefinition(slug);
 
-const id = `cms-form-${form.slug}`;
+const id = givenId || `cms-form-${form.slug}`;
 const fields = form.fields;
 const multipart = fields.some((field) => field.type === "file");
 const honeypot = form.spam.honeypot_field || "_hp";
@@ -53,7 +60,16 @@ const timestamp = form.spam.timestamp_field || "_ts";
 const captcha = form.spam.captcha;
 const returned = Astro.url.searchParams.get("form") === form.slug ? Astro.url.searchParams.get("form_status") : null;
 const state = returned === "sent" ? "sent" : returned === "error" ? "failed" : "idle";
-const rules = JSON.stringify(clientRules(form)).replace(/</g, "\\u003c");
+const config = clientRules(form);
+const rules = JSON.stringify(config).replace(/</g, "\\u003c");
+// What's shown before anyone answers: from the fields' defaults.
+const defaults: Record<string, string[]> = {};
+for (const field of fields) {
+  if (field.type === "checkbox") { if (field.default === "yes" || field.default === "true") defaults[field.name] = ["yes"]; }
+  else if (field.default) defaults[field.name] = [field.default];
+}
+const visible = shown(config.fields, { values: defaults });
+const hiddenField = (field: FormField) => Boolean(field.name) && field.type !== "heading" && !visible.has(field.name);
 // Where a post without JavaScript comes back to: this page, without a previous answer's status.
 const back = new URL(Astro.url);
 back.searchParams.delete("form");
@@ -89,10 +105,10 @@ const autocomplete: Record<string, string> = { email: "email", tel: "tel", url: 
           const help = field.help && <p class="cms-form__help" id={`${fid}-help`}>{field.help}</p>;
           const mark = required(field) && <span class="cms-form__required" aria-hidden="true"> *</span>;
           return (
-            <div class:list={["cms-form__field", `cms-form__field--${field.type}`, field.width === "half" ? "cms-form__field--half" : "cms-form__field--full"]} data-field={field.name}>
+            <div class:list={["cms-form__field", `cms-form__field--${field.type}`, field.width === "half" ? "cms-form__field--half" : "cms-form__field--full"]} data-field={field.name} data-show-if={field.show_if ? "" : undefined} hidden={hiddenField(field)}>
               {field.type === "checkbox" ? (
                 <label for={fid} class="cms-form__check">
-                  <input id={fid} type="checkbox" name={field.name} value="yes" required={required(field)} checked={field.default === "yes" || field.default === "true"} aria-describedby={describedBy(field)} />
+                  <input id={fid} type="checkbox" name={field.name} value="yes" required={required(field)} checked={field.default === "yes" || field.default === "true"} aria-describedby={describedBy(field)} disabled={hiddenField(field)} />
                   {" "}{field.text || field.label}{mark}
                 </label>
               ) : field.type === "radio" || field.type === "checkboxes" ? (
@@ -106,6 +122,7 @@ const autocomplete: Record<string, string> = { email: "email", tel: "tel", url: 
                         value={option}
                         required={field.type === "radio" && required(field) && index === 0}
                         checked={field.default === option}
+                        disabled={hiddenField(field)}
                       />
                       {" "}{option}
                     </label>
@@ -115,14 +132,14 @@ const autocomplete: Record<string, string> = { email: "email", tel: "tel", url: 
                 <Fragment>
                   <label for={fid}>{field.label}{mark}</label>
                   {field.type === "textarea" ? (
-                    <textarea id={fid} name={field.name} rows={field.rows || 5} required={required(field)} maxlength={maxLength(field)} placeholder={field.placeholder} aria-describedby={describedBy(field)}>{field.default ?? ""}</textarea>
+                    <textarea id={fid} name={field.name} rows={field.rows || 5} required={required(field)} maxlength={maxLength(field)} placeholder={field.placeholder} aria-describedby={describedBy(field)} disabled={hiddenField(field)}>{field.default ?? ""}</textarea>
                   ) : field.type === "select" ? (
-                    <select id={fid} name={field.name} required={required(field)} aria-describedby={describedBy(field)}>
+                    <select id={fid} name={field.name} required={required(field)} aria-describedby={describedBy(field)} disabled={hiddenField(field)}>
                       <option value="">{field.placeholder || "Choose…"}</option>
                       {(field.options ?? []).map((option) => <option value={option} selected={field.default === option}>{option}</option>)}
                     </select>
                   ) : field.type === "file" ? (
-                    <input id={fid} type="file" name={field.name} required={required(field)} accept={field.rules?.accept?.join(",") ?? field.accept} aria-describedby={describedBy(field)} />
+                    <input id={fid} type="file" name={field.name} required={required(field)} accept={field.rules?.accept?.join(",") ?? field.accept} aria-describedby={describedBy(field)} disabled={hiddenField(field)} />
                   ) : (
                     <input
                       id={fid}
@@ -138,6 +155,7 @@ const autocomplete: Record<string, string> = { email: "email", tel: "tel", url: 
                       pattern={field.type === "email" || field.type === "tel" || field.type === "url" ? field.rules?.pattern : undefined}
                       autocomplete={autocomplete[field.type]}
                       aria-describedby={describedBy(field)}
+                      disabled={hiddenField(field)}
                     />
                   )}
                 </Fragment>
@@ -178,10 +196,12 @@ const autocomplete: Record<string, string> = { email: "email", tel: "tel", url: 
   :where(.cms-form__field, .cms-form__heading) { flex: 1 1 100%; min-width: 0; }
   :where(.cms-form__field--half) { flex: 1 1 calc(50% - 0.5rem); }
   :where(.cms-form__honeypot) { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  /* A field its condition hides stays hidden whatever display the site gives fields. */
+  .cms-form__field[hidden] { display: none !important; }
 </style>
 
 <script>
-  import { postedFrom, sentence, validate, type FieldErrors, type RuledField } from "@librepublish/astro/forms/rules";
+  import { postedFrom, sentence, shown, validate, type FieldErrors, type RuledField } from "@librepublish/astro/forms/rules";
 
   interface Config { slug: string; success: string; redirect: string; fields: (RuledField & { label: string })[] }
 
@@ -198,6 +218,30 @@ const autocomplete: Record<string, string> = { email: "email", tel: "tel", url: 
     // The checks below speak the CMS's words; the browser's own stay out of the way.
     form.noValidate = true;
     stamp();
+
+    // Fields shown only for some answers: shown and enabled as they're
+    // given, hidden and disabled (so not posted) as they're taken back. A
+    // field just shown may itself show another, so it settles in a few passes.
+    const conditional = [...form.querySelectorAll<HTMLElement>("[data-field][data-show-if]")];
+    const toggle = () => {
+      for (let pass = 0; pass <= conditional.length; pass++) {
+        const visible = shown(config.fields, postedFrom(new FormData(form) as unknown as { entries(): IterableIterator<[string, unknown]> }));
+        let changed = false;
+        for (const wrapper of conditional) {
+          const on = visible.has(wrapper.dataset.field ?? "");
+          if (wrapper.hidden === !on) continue;
+          changed = true;
+          wrapper.hidden = !on;
+          wrapper.querySelectorAll<HTMLInputElement>("input, select, textarea").forEach((control) => { control.disabled = !on; });
+        }
+        if (!changed) break;
+      }
+    };
+    if (conditional.length) {
+      form.addEventListener("input", toggle);
+      form.addEventListener("change", toggle);
+      toggle();
+    }
 
     const clear = () => {
       form.querySelectorAll<HTMLElement>("[data-error-for]").forEach((el) => { el.hidden = true; el.textContent = ""; });
@@ -244,6 +288,7 @@ const autocomplete: Record<string, string> = { email: "email", tel: "tel", url: 
           form.dataset.state = "sent";
           form.reset();
           stamp();
+          if (conditional.length) toggle();
           resetCaptcha();
           status.textContent = answer.message || config.success;
           return;

@@ -106,6 +106,7 @@ export default function cms(options: CmsOptions = {}): AstroIntegration {
               CMS_BASE_URL: envField.string({ context: "server", access: "secret", optional: true }),
               CMS_API_TOKEN: envField.string({ context: "server", access: "secret", optional: true }),
               CMS_WEBHOOK_SECRET: envField.string({ context: "server", access: "secret", optional: true }),
+              CMS_FORM_HOOK_SECRET: envField.string({ context: "server", access: "secret", optional: true }),
               CLOUDFLARE_ZONE_ID: envField.string({ context: "server", access: "secret", optional: true }),
               CLOUDFLARE_API_TOKEN: envField.string({ context: "server", access: "secret", optional: true }),
             },

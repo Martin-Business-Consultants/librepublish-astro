@@ -16,6 +16,6 @@ export function clientRules(definition: FormDefinition) {
     redirect: definition.redirect_url,
     fields: definition.fields
       .filter((field) => field.type !== "heading" && field.name)
-      .map((field) => ({ name: field.name, type: field.type, label: field.label || field.name, rules: field.rules })),
+      .map((field) => ({ name: field.name, type: field.type, label: field.label || field.name, rules: field.rules, ...(field.show_if ? { show_if: field.show_if } : {}) })),
   };
 }

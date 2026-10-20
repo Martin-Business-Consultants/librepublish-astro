@@ -1,6 +1,6 @@
 {
   "name": "@librepublish/astro",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Build an Astro site on LibrePublish CMS (the Go core): schema-locked typed content loaders, live collections, generated types, blocks, rich text, branding, images, SEO, live forms, sitemap, redirects, cache purges and build checks",
   "license": "FSL-1.1-MIT",
   "type": "module",
@@ -51,6 +51,10 @@
     "./forms/rules": {
       "types": "./dist/forms/rules.d.ts",
       "default": "./dist/forms/rules.js"
+    },
+    "./forms/hook": {
+      "types": "./dist/forms/hook.d.ts",
+      "default": "./dist/forms/hook.js"
     },
     "./schema": {
       "types": "./dist/schema/zod.d.ts",

@@ -123,3 +123,26 @@ test("a closed form says so and draws no fields", async () => {
   assert.match(html, /This form isn't taking submissions\./);
   assert.equal(controls(html, "email").length, 0);
 });
+
+test("a field shown only for some answers is drawn hidden and disabled until they're given", { timeout: 60_000 }, async () => {
+  const conditional = form.fields.find((f) => f.show_if);
+  let html = await render(form);
+  assert.match(html, new RegExp(`data-field="${conditional.name}" data-show-if hidden`), "hidden");
+  assert.equal(controls(html, conditional.name)[0].attrs.disabled, true, "disabled, so not posted");
+  // Its condition met by a default, it's drawn shown.
+  const { field: controller, values } = conditional.show_if;
+  const met = { ...form, fields: form.fields.map((f) => (f.name === controller ? { ...f, default: values[0] } : f)) };
+  html = await render(met);
+  assert.doesNotMatch(html, new RegExp(`data-field="${conditional.name}" data-show-if hidden`));
+  assert.equal(controls(html, conditional.name)[0].attrs.disabled, undefined);
+});
+
+test("id names the form, for a page with it twice", { timeout: 60_000 }, async () => {
+  globalThis.fetch = async () => new Response(JSON.stringify({ form }), { headers: { "Content-Type": "application/json" } });
+  const { experimental_AstroContainer } = await import("astro/container");
+  const container = await experimental_AstroContainer.create();
+  const { default: Form } = await server.ssrLoadModule("/src/components/Form.astro");
+  const html = await container.renderToString(Form, { props: { slug: form.slug, id: "quote-mobile" }, request: new Request("https://acme.example/"), partial: true });
+  assert.match(html, /<form id="quote-mobile"/);
+  assert.match(html, /id="quote-mobile-email"/);
+});

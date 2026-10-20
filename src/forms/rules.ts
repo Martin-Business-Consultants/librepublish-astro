@@ -8,13 +8,14 @@
  * Free of the DOM, so it runs in the browser (<Form>'s script), on the server
  * and in tests alike.
  */
-import type { FieldRules, FieldType } from "./types.js";
+import type { FieldRules, FieldType, ShowIf } from "./types.js";
 
-/** What a field needs to be checked: its name, type (for the wording) and rules. */
+/** What a field needs to be checked: its name, type (for the wording), rules, and when it's shown. */
 export interface RuledField {
   name: string;
   type: FieldType | string;
   rules?: FieldRules;
+  show_if?: ShowIf;
 }
 
 /** A file as the browser gives it (File has these). */
@@ -61,14 +62,37 @@ const STRICT: Record<string, (value: string) => boolean> = {
   number: (value) => Number.isFinite(Number(value)),
 };
 
-/** Every field's problems, by name; {} when there are none. */
+/** Every shown field's problems, by name; {} when there are none. A field its condition hides isn't asked for. */
 export function validate(fields: RuledField[], posted: Posted): FieldErrors {
   const errors: FieldErrors = {};
+  const visible = shown(fields, posted);
   for (const field of fields) {
+    if (!visible.has(field.name)) continue;
     const problems = check(field, posted);
     if (problems.length) errors[field.name] = problems;
   }
   return errors;
+}
+
+/**
+ * The fields shown, given what's entered, as the CMS decides it
+ * (plugins/forms/hook.go): one with no `show_if` always is; one with a
+ * condition is when the field it names is shown and has one of its values.
+ * A condition names an earlier field, so one pass in order settles it.
+ */
+export function shown(fields: RuledField[], posted: Posted): Set<string> {
+  const out = new Set<string>();
+  for (const field of fields) {
+    if (!field.name) continue;
+    const condition = field.show_if;
+    if (!condition) {
+      out.add(field.name);
+      continue;
+    }
+    const answers = (posted.values[condition.field] ?? []).map((value) => value.trim()).filter(Boolean);
+    if (out.has(condition.field) && answers.some((answer) => condition.values.includes(answer))) out.add(field.name);
+  }
+  return out;
 }
 
 /** One field's problems. */

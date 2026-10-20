@@ -84,6 +84,10 @@ test("every recorded webhook asks /_cms/webhook for what the event means", () =>
     else if (body.event === "schema.changed") {
       assert.equal(todo.kind, "rebuild", file);
       assert.equal(todo.schema_digest, schema.meta.schema_digest);
+    } else if (body.event === "submission.created") {
+      // A form's submission: nothing for the site's cache. (A form's hook is how a site hears of one in time.)
+      assert.deepEqual(Object.keys(data).sort(), ["form", "form_name", "hook", "submission_id", "submitted_at", "values"], `${file}: data keys`);
+      assert.deepEqual(todo, { kind: "ignore", event: "submission.created" }, file);
     } else assert.fail(`${file}: an event /_cms/webhook doesn't know (${body.event})`);
   }
 });
