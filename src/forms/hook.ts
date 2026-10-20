@@ -36,7 +36,7 @@
  * handler that throws anything but a refusal answers 500 and the CMS carries
  * on without it.
  */
-import { verify } from "../runtime/signature.js";
+import { verifyRequest } from "../runtime/signature.js";
 
 /** What the CMS posts: one submission, its answers by field name (checkboxes: several). */
 export interface FormSubmission {
@@ -118,7 +118,7 @@ export function formHook<C extends { request: Request }>(handler: Handler<C>, op
     if (!secret) return json({ error: "CMS_FORM_HOOK_SECRET isn't set" }, 500);
 
     const body = await context.request.text();
-    if (!(await verify(body, context.request.headers.get("X-CMS-Signature"), secret))) {
+    if (!(await verifyRequest(body, context.request.headers, secret))) {
       return json({ error: "bad signature" }, 401);
     }
     let submission: FormSubmission;

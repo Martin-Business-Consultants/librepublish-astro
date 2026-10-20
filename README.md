@@ -404,7 +404,9 @@ export const POST = formHook(async (submission) => {
 | anything else thrown, or the site down (the CMS waits 6 s) | gets the form's own thank-you: the submission is kept and emailed as usual |
 
 The post is `contracts/forms/form-hook-request.json`, signed like a webhook
-(`X-CMS-Signature: sha256=<hex HMAC-SHA256 of the body>`).
+(`X-CMS-Signature-V2` over `X-CMS-Timestamp` and the body, five minutes'
+tolerance, from a CMS at 2.8.0 or later; `X-CMS-Signature: sha256=<hex
+HMAC-SHA256 of the body>` from an older one).
 
 The handler's third argument reports what it did, for the CMS's hook log and
 the submission (Forms › Hook log), and says when the post is a test:
@@ -455,7 +457,7 @@ Deploy. Set these as the Worker's secrets:
 - `CLOUDFLARE_ZONE_ID` and `CLOUDFLARE_API_TOKEN` (with Cache Purge), to purge
   Cloudflare's cache by tag.
 
-`/_cms/webhook` (`/_cms/webhook/` on a site with `trailingSlash: "always"`, and the build reports that address) checks `X-CMS-Signature` (contracts/webhook_contract.json)
+`/_cms/webhook` (`/_cms/webhook/` on a site with `trailingSlash: "always"`, and the build reports that address) checks the signature (contracts/webhook_contract.json): from a CMS at 2.8.0 or later `X-CMS-Signature-V2` with `X-CMS-Timestamp`, refusing a post more than five minutes old or ahead, so a captured one can't be replayed; from an older CMS `X-CMS-Signature`,
 and takes the deploy's purge (`{tags, reason}`) or a webhook's event: `page.*`
 and `entry.*` purge what they name, `global.updated` its global, and
 `schema.changed` answers `202 rebuild_required` — the site's code was checked

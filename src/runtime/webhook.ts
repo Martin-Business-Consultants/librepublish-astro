@@ -1,7 +1,8 @@
 /**
  * POST /_cms/webhook — the CMS telling an on-demand site what changed, signed
- * with CMS_WEBHOOK_SECRET (X-CMS-Signature: sha256=<hex HMAC-SHA256 of the
- * raw body>, contracts/webhook_contract.json). What it asks for is
+ * with CMS_WEBHOOK_SECRET (X-CMS-Signature-V2 over the timestamp and body,
+ * or from a CMS before 2.8.0 X-CMS-Signature over the body alone,
+ * contracts/webhook_contract.json). What it asks for is
  * runtime/purge.ts's. With CLOUDFLARE_ZONE_ID and CLOUDFLARE_API_TOKEN set, it
  * purges those cache tags (or everything) from Cloudflare's cache; either way
  * it answers what it did, and the CMS logs it.
@@ -9,7 +10,7 @@
 import type { APIRoute } from "astro";
 import { getSecret } from "astro:env/server";
 import { plan } from "./purge.js";
-import { verify } from "./signature.js";
+import { verifyRequest } from "./signature.js";
 
 export const prerender = false;
 
@@ -18,7 +19,7 @@ export const POST: APIRoute = async ({ request }) => {
   if (!secret) return json({ error: "CMS_WEBHOOK_SECRET isn't set" }, 500);
 
   const body = await request.text();
-  if (!(await verify(body, request.headers.get("X-CMS-Signature"), secret))) {
+  if (!(await verifyRequest(body, request.headers, secret))) {
     return json({ error: "bad signature" }, 401);
   }
 
