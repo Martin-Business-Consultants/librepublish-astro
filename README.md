@@ -20,7 +20,8 @@ written against its APIs, so the two move together:
 - **Forms.** `<Form slug="…"/>` draws a form built in the CMS from its live
   definition on every request — every field type, its rules checked in the
   browser by one generic validator, errors from the CMS beside each field,
-  and it still works without JavaScript.
+  and it still works without JavaScript. A fully static site draws the same
+  form in the browser instead (`<StaticForm>`, a Svelte island).
 - **Site files.** `/sitemap.xml`, `/robots.txt` and Cloudflare `_redirects`,
   all from the CMS. Redirects live in the CMS and nowhere else.
 - **Publishing.** A static site is rebuilt when content is published. An
@@ -442,6 +443,106 @@ export const POST = formHook(async (submission, _context, hook) => {
   `"test": true`, `X-CMS-Test: 1`). Nothing is kept, so skip what a test
   shouldn't do.
 
+## Forms on a static site
+
+`<Form>` needs pages rendered on demand. A site that must be fully static (no
+adapter, every page prerendered) draws the form in the browser instead:
+`<StaticForm>` renders `<FormIsland>`, a Svelte island that reads the form's
+live definition from the CMS when the page loads and posts straight to it.
+The page stays static, and an edit to the form in the CMS shows without a
+build. Add Svelte to the site (`npx astro add svelte`; `svelte` and
+`@astrojs/svelte` are optional peer dependencies), then:
+
+```astro
+---
+import StaticForm from "@librepublish/astro/components/StaticForm.astro";
+---
+<StaticForm slug="contact" />
+```
+
+It hydrates at once (`client:load`) with the CMS's address from the build
+(the CMS's own URL, else `CMS_BASE_URL`; `cms="https://…"` overrides it), and
+tells a visitor without JavaScript that the form needs it. Everything in
+[Forms](#forms) holds: every field type, `show_if`, `_hp` and `_ts`, the
+captcha and its script, the same validator before posting, the CMS's 422
+beside each field, 410 and 429 said plainly, and the same markup,
+`cms-form__*` classes and `data-state` (idle, sending, sent, failed), so a
+site's form styles carry over. Two states are the island's own: `loading`
+until the definition comes, and `unavailable` when the CMS can't be reached
+(a message, `.cms-form__unavailable`, and no form). It posts JSON (a file as
+`{filename, content_type, data}`, base64), reads the definition afresh on
+each page load, and goes to the answer's `redirect` (the form's thank-you
+page, or a hook's) or shows its message.
+
+**Its own design.** A field the site draws itself goes in a slot named
+`field-<name>`; the island keeps the field's wrapper (`data-field`, its
+`show_if`), help and error around it, so the site's controls need only the
+field's name:
+
+```astro
+<StaticForm slug="quote" classes={{ submit: "btn btn--primary", field: "row" }}>
+  <div slot="field-service_type" class="pills">
+    <label><input type="radio" name="service_type" value="Move It" /> Move it</label>
+    <label><input type="radio" name="service_type" value="Store It" /> Store it</label>
+  </div>
+  <p slot="after" class="fine-print">We reply within a day.</p>
+</StaticForm>
+```
+
+| | |
+|---|---|
+| `slug`, `cms`, `id`, `class` | The form, the CMS's address (`<FormIsland>` needs it; `<StaticForm>` has the build's), the form's id (`cms-form-<slug>`), a class on it. |
+| `classes` | Classes added beside the `cms-form__*` ones: `form`, `fields`, `field`, `label`, `control`, `help`, `error`, `submit`, `status`. |
+| slot `field-<name>` | That field drawn with the site's markup. Hidden by its condition, its controls are disabled. |
+| slots `before`, `after` | Before and after the fields (above the submit button). |
+| `cms-form:before-submit` | After the CMS's rules pass, before the post. `detail.values` is what will be posted (add or change values); `detail.waitUntil(promise)` waits for a check, whose answer is nothing (carry on), `false` (stop) or `{ field: [message] }` (stop, and show them); `preventDefault()` stops it. |
+| `cms-form:submitted` | Sent: `detail.values`, `detail.outcome`, `detail.redirect` (absolute, or ""). `preventDefault()` keeps the visitor on the page. |
+| `cms-form:error` | Not sent, or the form couldn't load: `detail.status` (0: never got there), `message`, `errors`. |
+| `cms-form:ready` | Drawn: `detail.definition`. |
+
+The events bubble from the form, so a page's script can listen on
+`document`; a zip pre-check:
+
+```astro
+<script>
+  document.addEventListener("cms-form:before-submit", (event) => {
+    const { values, waitUntil } = (event as CustomEvent).detail;
+    waitUntil(fetch(`/zips/${values.to_zip}.json`).then((r) => (r.ok ? undefined : { to_zip: ["isn't in our service area"] })));
+  });
+</script>
+```
+
+From the site's own Svelte component, `<FormIsland>` takes the same as
+props: `beforeSubmit(values, { slug, definition, form })`, `onsubmitted`
+(return `false` to stay on the page), `onerror`, `onready`, the `before` and
+`after` snippets, and `renderers`, a snippet by field name that's handed
+`{ field, id, required, describedBy, hidden, error }`:
+
+```svelte
+<script lang="ts">
+  import FormIsland from "@librepublish/astro/components/FormIsland.svelte";
+  let { cms } = $props();
+</script>
+
+<FormIsland slug="quote" {cms} renderers={{ service_type }} beforeSubmit={(values) => { values.landing = location.pathname; }} />
+
+{#snippet service_type({ field, id })}
+  <div class="pills" {id}>
+    {#each field.options ?? [] as option}<label><input type="radio" name="service_type" value={option} /> {option}</label>{/each}
+  </div>
+{/snippet}
+```
+
+The page renders it as an island and hands it the CMS's address as browsers
+reach it: `<QuoteForm client:load cms="https://cms.example.com" />`. A value
+the CMS has no field for is dropped: give the form a hidden field for
+anything a site adds.
+
+The site's origin must be allowed (Settings › General › Allowed origins): the
+browser reads the definition and posts across origins. `<Form>`'s build check
+stays: `<Form>` on a prerendered page still stops the build; `<StaticForm>`
+and `<FormIsland>` are meant for one.
+
 ## Pages rendered on demand
 
 The build tells the CMS how the site renders. A **static** site (no adapter,
@@ -512,11 +613,27 @@ what fails. `cms({ siteHealth: "error" })` makes a failing check stop the build.
 | `@librepublish/astro/branding` | `brandingCss`, `brandingFontHref`, `checkedBranding`, `hexColor`, `isLight`. |
 | `@librepublish/astro/forms` | `formDefinition` and the form types. |
 | `@librepublish/astro/forms/rules` | The generic validator `<Form>` runs: `validate`, `check`, `shown`, `postedFrom`. |
+| `@librepublish/astro/forms/browser` | What a form does in the browser, for `<Form>` and `<FormIsland>`: `fetchDefinition`, `jsonBody`, `submit`, `outcome`, `defaultValues`, `MESSAGES`. |
 | `@librepublish/astro/forms/hook` | `formHook`, `FormHookRefusal`, `answer`: a form's hook endpoint. |
 | `@librepublish/astro/schema` | `buildSchemas`: the CMS's JSON Schema as Zod. |
-| `@librepublish/astro/components/*.astro` | `Blocks`, `Image`, `RichText`, `BrandStyles`, `Seo`, `Form`. |
+| `@librepublish/astro/components/*.astro` | `Blocks`, `Image`, `RichText`, `BrandStyles`, `Seo`, `Form`, `StaticForm`. |
+| `@librepublish/astro/components/FormIsland.svelte` | The island `StaticForm` renders, for a site's own Svelte component. |
 | `librepublish:types` | Generated from the CMS's schema. |
 | `npx librepublish-astro sync\|check` | The schema lock. |
+
+## Changes in 0.7.0
+
+- **Forms on a static site**: `<StaticForm slug>` (and the Svelte island it
+  renders, `<FormIsland>`) draws a CMS form in the browser from its live
+  definition and posts straight to the CMS, so a fully static site has the
+  CMS's forms and an edit shows without a build. Same markup, classes,
+  `data-state`, validator and answers as `<Form>`; slots, class hooks,
+  `renderers`, `beforeSubmit` and `cms-form:*` events for a site's own
+  design and checks.
+- `@librepublish/astro/forms/browser`: the browser half of a form, which
+  `<Form>`'s script now shares with the island.
+- `svelte` and `@astrojs/svelte` are optional peer dependencies (only for
+  `<StaticForm>`). `npm run typecheck` also runs `svelte-check`.
 
 ## Changes in 0.6.0
 
@@ -634,7 +751,8 @@ written for the Rails core's API.
    and the casts on their data (`as unknown as CmsPage`): it's typed now.
 4. Replace `components={{ … }}` maps with one `satisfies BlockComponents`
    covering every block type.
-5. Pages with `<Form>`: `export const prerender = false`, and an adapter.
+5. Pages with `<Form>`: `export const prerender = false`, and an adapter
+   (or, on a static site, `<StaticForm>`).
 6. `npx librepublish-astro sync`, `npx astro check`, commit `cms.lock.json`.
 
 ## Develop
@@ -655,7 +773,8 @@ its `TestContract`. They're the integration's half of the drift gate
 (`librepublishgo/contracts/README.md`): the digests the
 CMS recorded are recomputed here, the form validator must reach the server's
 recorded verdict, `<Form>` renders the recorded definition (through Astro's
-container), and `test/contracts.sha256` pins the contract files this package
+container), `<FormIsland>` draws it in jsdom and is answered with the
+recorded posts, and `test/contracts.sha256` pins the contract files this package
 was last checked against — so a contract change fails here until the
 integration is updated for it and re-pinned:
 

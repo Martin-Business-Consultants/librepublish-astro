@@ -32,6 +32,7 @@
  * is on the page more than once (cms-form-<slug> by default).
  */
 import { clientRules, formDefinition, type FormField } from "@librepublish/astro/forms";
+import { defaultValues, MESSAGES } from "@librepublish/astro/forms/browser";
 import { shown } from "@librepublish/astro/forms/rules";
 
 interface Props {
@@ -63,12 +64,7 @@ const state = returned === "sent" ? "sent" : returned === "error" ? "failed" : "
 const config = clientRules(form);
 const rules = JSON.stringify(config).replace(/</g, "\\u003c");
 // What's shown before anyone answers: from the fields' defaults.
-const defaults: Record<string, string[]> = {};
-for (const field of fields) {
-  if (field.type === "checkbox") { if (field.default === "yes" || field.default === "true") defaults[field.name] = ["yes"]; }
-  else if (field.default) defaults[field.name] = [field.default];
-}
-const visible = shown(config.fields, { values: defaults });
+const visible = shown(config.fields, { values: defaultValues(fields) });
 const hiddenField = (field: FormField) => Boolean(field.name) && field.type !== "heading" && !visible.has(field.name);
 // Where a post without JavaScript comes back to: this page, without a previous answer's status.
 const back = new URL(Astro.url);
@@ -184,7 +180,7 @@ const autocomplete: Record<string, string> = { email: "email", tel: "tel", url: 
     </Fragment>
   )}
   <p class="cms-form__status" role="status" aria-live="polite">
-    {state === "sent" ? (form.success_message || "Thanks — we got it.") : state === "failed" ? "Something wasn't right: check the form and send it again." : ""}
+    {state === "sent" ? (form.success_message || MESSAGES.sent) : state === "failed" ? "Something wasn't right: check the form and send it again." : ""}
   </p>
   <script type="application/json" data-cms-form-rules set:html={rules}></script>
 </form>
@@ -201,14 +197,10 @@ const autocomplete: Record<string, string> = { email: "email", tel: "tel", url: 
 </style>
 
 <script>
+  import { MESSAGES, outcome } from "@librepublish/astro/forms/browser";
   import { postedFrom, sentence, shown, validate, type FieldErrors, type RuledField } from "@librepublish/astro/forms/rules";
 
   interface Config { slug: string; success: string; redirect: string; fields: (RuledField & { label: string })[] }
-
-  const MESSAGES: Record<number, string> = {
-    410: "This form isn't taking submissions.",
-    429: "Too many tries: please wait a few minutes.",
-  };
 
   for (const form of document.querySelectorAll<HTMLFormElement>("form[data-cms-form]")) {
     const config = JSON.parse(form.querySelector("script[data-cms-form-rules]")?.textContent ?? "{}") as Config;
@@ -272,34 +264,34 @@ const autocomplete: Record<string, string> = { email: "email", tel: "tel", url: 
       const errors = validate(config.fields, postedFrom(data as unknown as { entries(): IterableIterator<[string, unknown]> }));
       if (Object.keys(errors).length) {
         form.dataset.state = "failed";
-        status.textContent = "Please check the highlighted fields.";
+        status.textContent = MESSAGES.invalid;
         show(errors);
         return;
       }
 
       form.dataset.state = "sending";
-      status.textContent = "Sending…";
+      status.textContent = MESSAGES.sending;
       const body = form.enctype === "multipart/form-data" ? data : new URLSearchParams(data as unknown as Record<string, string>);
       try {
         const response = await fetch(form.action, { method: "POST", body, headers: { Accept: "application/json" } });
-        const answer = await response.json().catch(() => ({})) as { message?: string; redirect?: string; errors?: FieldErrors };
-        if (response.ok) {
+        const answer = outcome(response.status, await response.json().catch(() => ({})), config.success);
+        if (answer.ok) {
           if (answer.redirect) { window.location.assign(new URL(answer.redirect, window.location.href).href); return; }
           form.dataset.state = "sent";
           form.reset();
           stamp();
           if (conditional.length) toggle();
           resetCaptcha();
-          status.textContent = answer.message || config.success;
+          status.textContent = answer.message;
           return;
         }
         form.dataset.state = "failed";
-        if (answer.errors) show(answer.errors);
-        status.textContent = MESSAGES[response.status] ?? answer.message ?? "Something went wrong: please try again.";
+        show(answer.errors);
+        status.textContent = answer.message;
         resetCaptcha();
       } catch {
         form.dataset.state = "failed";
-        status.textContent = "Couldn't send: check your connection and try again.";
+        status.textContent = MESSAGES.network;
       }
     });
   }

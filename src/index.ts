@@ -34,7 +34,8 @@
  *     on demand, and does both for a hybrid one.
  *
  * Forms (the Forms plugin) render on demand from their live definition:
- * <Form slug="…"/> (@librepublish/astro/components/Form.astro).
+ * <Form slug="…"/> (@librepublish/astro/components/Form.astro); on a static
+ * page, in the browser: <StaticForm slug="…"/> (a Svelte island).
  */
 import { access, readFile, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
@@ -176,6 +177,8 @@ export default function cms(options: CmsOptions = {}): AstroIntegration {
           vite: { define: {
             __LIBREPUBLISH_SCHEMA_DIGEST__: JSON.stringify(read?.live.digest ?? null),
             __LIBREPUBLISH_TRAILING_SLASH__: JSON.stringify(config.trailingSlash ?? "ignore"),
+            // Where browsers reach the CMS, for <StaticForm>: its own address, else the build's.
+            __LIBREPUBLISH_FORMS_URL__: JSON.stringify((site?.meta.cms_url || connection.url).replace(/\/+$/, "")),
           } },
         });
 

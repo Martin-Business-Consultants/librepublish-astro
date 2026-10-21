@@ -1,0 +1,48 @@
+---
+/**
+ * A form built in the CMS, on a page that's prerendered: <FormIsland>,
+ * hydrated at once, with the CMS's address from the build — so a site with no
+ * adapter (every page static) has the CMS's forms too, and an edit to a form
+ * shows without a build.
+ *
+ *   ---
+ *   import StaticForm from "@librepublish/astro/components/StaticForm.astro";
+ *   ---
+ *   <StaticForm slug="contact" />
+ *
+ * Needs Svelte in the site (`npx astro add svelte`). The browser reads the
+ * form's definition from the CMS and posts to it, so the site's origin must
+ * be allowed (Settings › General). A visitor without JavaScript is told the
+ * form needs it.
+ *
+ * Its slots go to the island: `field-<name>` draws that field with the
+ * site's own markup (its controls named as the field), `before` and `after`
+ * sit around the fields. `cms` overrides the CMS's address (the build's:
+ * the CMS's own URL, else CMS_BASE_URL).
+ */
+import FormIsland from "./FormIsland.svelte";
+
+interface Props {
+  slug: string;
+  cms?: string;
+  id?: string;
+  class?: string;
+  /** Classes added beside the cms-form__* ones: form, fields, field, label, control, help, error, submit, status. */
+  classes?: Record<string, string>;
+}
+
+/** The CMS's address as browsers reach it, set by cms() at build time. */
+declare const __LIBREPUBLISH_FORMS_URL__: string | null | undefined;
+
+const { slug, cms: given, id, class: className, classes } = Astro.props;
+const cms = given || (typeof __LIBREPUBLISH_FORMS_URL__ === "string" ? __LIBREPUBLISH_FORMS_URL__ : "");
+if (!cms) {
+  throw new Error(`<StaticForm slug="${slug}">: no CMS address. Add cms() to astro.config's integrations (with CMS_BASE_URL set), or pass cms="https://…".`);
+}
+const slots: Record<string, string> = {};
+for (const name of Object.keys(Astro.slots)) slots[name] = await Astro.slots.render(name);
+---
+<FormIsland client:load slug={slug} cms={cms} id={id} class={className} classes={classes}>
+  {Object.entries(slots).map(([name, html]) => <Fragment slot={name} set:html={html} />)}
+</FormIsland>
+<noscript><p class="cms-form__noscript">This form needs JavaScript. Turn it on and reload the page to send it.</p></noscript>
