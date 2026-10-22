@@ -14,11 +14,12 @@
  * When an answer carries a schema digest other than the one the site was
  * built against, the response says so (X-CMS-Schema-Stale) and the log once.
  */
+import type { MiddlewareHandler } from "astro";
 import { defineMiddleware } from "astro:middleware";
 import type { CmsClient } from "../client.js";
 import { runtimeClient, warnIfSchemaMoved } from "./env.js";
 
-export const onRequest = defineMiddleware(async (context, next) => {
+export const onRequest: MiddlewareHandler = defineMiddleware(async (context, next) => {
   if (context.isPrerendered) return next();
 
   const tags = new Set<string>();

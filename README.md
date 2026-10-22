@@ -669,6 +669,13 @@ catches a site whose hook secret isn't its form's.
 | `librepublish:types` | Generated from the CMS's schema. |
 | `npx librepublish-astro sync\|check` | The schema lock. |
 
+## Changes in 0.8.2
+
+- Installs from GitHub with pnpm 10 under pnpm/action-setup (CI) again: the
+  loaders and the middleware declare their types (`Loader`,
+  `MiddlewareHandler`), so building the package in pnpm's store, inside a
+  `node_modules`, no longer fails with TS2742.
+
 ## Changes in 0.8.1
 
 - `build.forms` finds a form a site's own island names in minified code

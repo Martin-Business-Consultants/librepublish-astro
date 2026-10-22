@@ -80,7 +80,7 @@ interface Kind {
   schema(zod: CmsZod): { schema: CmsZod["page"]; entry: string };
 }
 
-function contentLoader(kind: Kind) {
+function contentLoader(kind: Kind): Loader {
   return {
     name: kind.name,
     createSchema: async () => {
@@ -112,7 +112,7 @@ function contentLoader(kind: Kind) {
 }
 
 /** Every live page; `locale` keeps one language. */
-export function cmsPages(options: { locale?: string } = {}) {
+export function cmsPages(options: { locale?: string } = {}): Loader {
   return contentLoader({
     name: "librepublish-pages",
     pick: ({ pages }) => pages.filter((page) => !options.locale || page.locale === options.locale).map((page) => [page.path, page as any]),
@@ -122,7 +122,7 @@ export function cmsPages(options: { locale?: string } = {}) {
 }
 
 /** A collection's live entries; `locale` keeps one language. */
-export function cmsEntries(collection: string, options: { locale?: string } = {}) {
+export function cmsEntries(collection: string, options: { locale?: string } = {}): Loader {
   return contentLoader({
     name: `librepublish-entries-${collection}`,
     pick: ({ entries }) => entries
@@ -134,7 +134,7 @@ export function cmsEntries(collection: string, options: { locale?: string } = {}
 }
 
 /** The globals (nav, footer…), by slug. */
-export function cmsGlobals() {
+export function cmsGlobals(): Loader {
   return contentLoader({
     name: "librepublish-globals",
     pick: ({ globals }) => globals.map((global) => [global.slug, global as any]),
@@ -144,7 +144,7 @@ export function cmsGlobals() {
 }
 
 /** The assets the content points at, by id: absolute URLs, size, alt, renditions. */
-export function cmsAssets() {
+export function cmsAssets(): Loader {
   return contentLoader({
     name: "librepublish-assets",
     pick: (_content, assets) => Object.entries(assets).map(([id, value]) => [id, value as any]),
