@@ -175,6 +175,15 @@ try {
     assert.match(types, /declare module "librepublish:types"/);
     assert.ok(types.includes(locked.schema_digest));
     assert.ok(!existsSync(join(out, "contact/index.html")), "the form page isn't prerendered");
+    // localFiles: the prerendered pages serve the CMS's files from the site.
+    assert.match(log, /localFiles: \d+ CMS files? copied into the build/);
+    assert.ok(!read("index.html").includes(`${cms}/files/`), "no prerendered page links a file on the CMS");
+    assert.ok(existsSync(join(out, "cms-files")), "the copies are in the build");
+    // The build's items in the CMS's launch checklist.
+    const launch = Object.fromEntries((await api("GET", "/api/x/launch/checks?show=all")).checks.map((c) => [c.key, c]));
+    assert.equal(launch["build.schema_lock"]?.state, "passes", "the build reported its checks");
+    assert.equal(launch["build.no_secrets"]?.state, "passes", launch["build.no_secrets"]?.evidence);
+    assert.equal(launch["build.redirects"]?.state, "passes");
 
     step(`serving it (${mode})`);
     const sitePort = await freePort();
@@ -204,6 +213,15 @@ try {
     assert.equal((await fetch(`${base}/_cms/webhook`, { method: "POST", body: purge, headers: { "X-CMS-Signature": "sha256=00" } })).status, 401);
     const answer = await (await fetch(`${base}/_cms/webhook`, { method: "POST", body: purge, headers: { "X-CMS-Signature": signed } })).json();
     assert.deepEqual(answer.tags, ["page:about"]);
+
+    // The launch checklist's question to the live site: signed (as the CMS
+    // signs, with the timestamp) it answers which secret verified it.
+    const question = JSON.stringify({ purpose: "launch_check", nonce: "e2e" });
+    const at = String(Math.floor(Date.now() / 1000));
+    const v2 = `sha256=${createHmac("sha256", "e2e-secret").update(`${at}.${question}`).digest("hex")}`;
+    assert.equal((await fetch(`${base}/_cms/checks`, { method: "POST", body: question })).status, 401, "an unsigned question gets nothing");
+    const checks = await (await fetch(`${base}/_cms/checks`, { method: "POST", body: question, headers: { "X-CMS-Timestamp": at, "X-CMS-Signature-V2": v2 } })).json();
+    assert.equal(checks.verified_with, "webhook");
 
     if (mode === "SSR=1") {
       const live = await fetch(`${base}/live/about`);

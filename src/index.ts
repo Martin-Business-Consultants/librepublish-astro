@@ -51,6 +51,9 @@ import { accepted, decide, LOCK_FILE, lockFrom, readLock, writeLock, type Comman
 import { readLive, type LiveRead } from "./schema/live.js";
 import { moduleTypes } from "./schema/typegen.js";
 import { servedSitemap } from "./sitemap-filter.js";
+import { envChecks, formsCheck, mediaCheck, prerenderCheck, redirectsCheck, schemaCheck, secretsCheck, siteChecks, siteFilesCheck, type LaunchCheck, type SiteCheck, type SiteEnv } from "./launch-checks.js";
+import { localizeFiles, scrubDevVars, type LocalFilesResult } from "./local-files.js";
+import { loadEnv } from "vite";
 import type { CmsSite, CmsSiteMeta } from "./types.js";
 
 export const NAME = "librepublish";
@@ -70,10 +73,25 @@ export interface CmsOptions {
   siteHealth?: "warn" | "error" | "off";
   /** Report each build to the CMS. Default: true. */
   report?: boolean;
+  /**
+   * Copy the CMS files the built pages link into the build (`cms-files/`)
+   * and point the links at the copies, so the live site serves its own
+   * images. Default: true.
+   */
+  localFiles?: boolean;
+  /**
+   * The routes meant to render on demand ("/api/quote-hook"), as Astro
+   * names them. The launch checklist flags any other route that does.
+   */
+  onDemand?: string[];
+  /** The variables the site needs where it's built and where it runs, by name. */
+  env?: SiteEnv;
+  /** The site's own items for the CMS's launch checklist: ones the build runs, and ones a person ticks. */
+  checks?: SiteCheck[];
 }
 
 export default function cms(options: CmsOptions = {}): AstroIntegration {
-  const { i18n = true, sitemap = true, siteHealth = "warn", report = true } = options;
+  const { i18n = true, sitemap = true, siteHealth = "warn", report = true, localFiles = true } = options;
   if ("redirects" in options) {
     throw new Error(`cms({ redirects }) is gone: the CMS's redirects are always written. ${REDIRECTS_LIVE_IN_THE_CMS}.`);
   }
@@ -87,6 +105,9 @@ export default function cms(options: CmsOptions = {}): AstroIntegration {
   let onDemand = false;
   let render: "static" | "server" | "hybrid" = "static";
   let onDemandPatterns: RegExp[] = [];
+  let onDemandRoutes: string[] = [];
+  let serverDir: URL | undefined;
+  let projectRoot = process.cwd();
   let startedAt = 0;
   let trailingSlash: string | undefined;
 
@@ -105,6 +126,7 @@ export default function cms(options: CmsOptions = {}): AstroIntegration {
           throw new Error(`${REDIRECTS_LIVE_IN_THE_CMS}: astro.config's \`redirects\` defines ${own.length} (${own.slice(0, 3).join(", ")}${own.length > 3 ? ", …" : ""}).`);
         }
         const root = fileURLToPath(config.root);
+        projectRoot = root;
         connection = resolveConnection(root, command === "dev" ? "development" : "production", options);
 
         updateConfig({
@@ -179,6 +201,9 @@ export default function cms(options: CmsOptions = {}): AstroIntegration {
             __LIBREPUBLISH_TRAILING_SLASH__: JSON.stringify(config.trailingSlash ?? "ignore"),
             // Where browsers reach the CMS, for <StaticForm>: its own address, else the build's.
             __LIBREPUBLISH_FORMS_URL__: JSON.stringify((site?.meta.cms_url || connection.url).replace(/\/+$/, "")),
+            // For /_cms/checks: the variables the site runs on, by name.
+            __LIBREPUBLISH_RUNTIME_ENV__: JSON.stringify(options.env?.runtime ?? []),
+            __LIBREPUBLISH_VERSION__: JSON.stringify(VERSION),
           } },
         });
 
@@ -193,12 +218,15 @@ export default function cms(options: CmsOptions = {}): AstroIntegration {
         onDemand = Boolean(config.adapter);
         if (onDemand) {
           injectRoute({ pattern: "/_cms/webhook", entrypoint: "@librepublish/astro/runtime/webhook", prerender: false });
+          // The launch checklist asks the live site what only it can see.
+          injectRoute({ pattern: "/_cms/checks", entrypoint: "@librepublish/astro/runtime/checks", prerender: false });
           addMiddleware({ entrypoint: "@librepublish/astro/runtime/middleware", order: "pre" });
         }
       },
 
       "astro:config:done": async ({ config, injectTypes, logger }) => {
         clientDir = config.build.client;
+        serverDir = config.adapter ? config.build.server : undefined;
         if (!read) return;
         try {
           injectTypes({ filename: "cms.d.ts", content: moduleTypes(read.schema, read.live.digest) });
@@ -215,10 +243,12 @@ export default function cms(options: CmsOptions = {}): AstroIntegration {
         const prerendered = pages.filter((route) => route.isPrerendered).length;
         render = prerendered === pages.length ? "static" : prerendered === 0 ? "server" : "hybrid";
         onDemandPatterns = pages.filter((route) => !route.isPrerendered && route.type === "page").map((route) => route.patternRegex);
+        onDemandRoutes = pages.filter((route) => !route.isPrerendered).map((route) => route.pattern);
       },
 
       "astro:build:done": async ({ dir, pages, logger }) => {
         if (!client || !connection) return;
+        let redirectCount = 0;
 
         // Every answer the build read must have come from the locked schema.
         const locked = read?.live.digest;
@@ -241,8 +271,19 @@ export default function cms(options: CmsOptions = {}): AstroIntegration {
           }
           const rules = await client.redirectsFile();
           await writeFile(file, `${marker}\n${rules}`);
-          logger.info(`_redirects: ${redirectRules(rules).length} rules from the CMS`);
+          redirectCount = redirectRules(rules).length;
+          logger.info(`_redirects: ${redirectCount} rules from the CMS`);
         }
+
+        // The CMS's files, served by the site.
+        let local: LocalFilesResult | null = null;
+        if (localFiles) {
+          const hosts = [connection.url, site?.meta.cms_url ?? ""];
+          local = await localizeFiles({ clientDir: assetsDir, hosts, fetchBase: connection.url, siteUrl });
+          if (local.copied || local.rewritten) logger.info(`localFiles: ${local.copied} CMS file${local.copied === 1 ? "" : "s"} copied into the build; links rewritten in ${local.rewritten}`);
+          for (const file of local.missing) logger.warn(`localFiles: the CMS has no file at ${file}: pages still link it there`);
+        }
+        if (await scrubDevVars(serverDir)) logger.info("CMS_BASE_URL and CMS_API_TOKEN left out of the server's .dev.vars");
 
         if (sitemap) {
           const file = new URL("sitemap.xml", assetsDir);
@@ -271,11 +312,30 @@ export default function cms(options: CmsOptions = {}): AstroIntegration {
           if (!findings.length) logger.info("Site health: everything checks out");
         }
 
+        // The launch checklist's build items: reported, warned about, never fatal.
+        const dotEnv = loadEnv("production", projectRoot, "");
+        const checks: LaunchCheck[] = [
+          schemaCheck(locked),
+          prerenderCheck(onDemandRoutes.filter((route) => !route.startsWith("/_cms/") && !route.startsWith("/_server-islands") && route !== "/_image"), options.onDemand),
+          await secretsCheck({ dirs: [assetsDir, ...(serverDir ? [serverDir] : [])], serverDir, token: connection.token, cmsUrl: connection.url, onDemand: onDemandPatterns.length > 0 }),
+          mediaCheck(local, render),
+          siteFilesCheck(assetsDir, sitemap),
+          redirectsCheck(redirectCount),
+          await formsCheck(assetsDir, await client.formList().then((list) => list.forms, () => null)),
+          ...envChecks(options.env, (name) => Boolean(process.env[name] || dotEnv[name])),
+          ...(await siteChecks(options.checks)),
+        ];
+        for (const check of checks) {
+          if (check.state === "fails" || check.state === "warns") logger.warn(`Launch checklist: ${check.title} — ${check.evidence}`);
+        }
+
         if (report) {
           try {
             const answer = await client.reportBuild({
+              checks,
               render,
               webhook_url: onDemand && siteUrl ? new URL(webhookPath(trailingSlash), siteUrl).href : undefined,
+              checks_url: onDemand && siteUrl ? new URL(checksPath(trailingSlash), siteUrl).href : undefined,
               content_cursor: lastCursor,
               integration: NAME,
               integration_version: VERSION,
@@ -307,7 +367,12 @@ export { cms };
 export function webhookPath(trailingSlash?: string): string {
   return trailingSlash === "always" ? "/_cms/webhook/" : "/_cms/webhook";
 }
+/** Where /_cms/checks answers, in the site's `trailingSlash` form (as webhookPath). */
+export function checksPath(trailingSlash?: string): string {
+  return trailingSlash === "always" ? "/_cms/checks/" : "/_cms/checks";
+}
 export type { CmsClient } from "./client.js";
+export type { LaunchCheck, SiteCheck, SiteEnv } from "./launch-checks.js";
 
 async function exists(url: URL) {
   return access(url).then(() => true, () => false);

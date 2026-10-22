@@ -591,6 +591,50 @@ Every build checks the site against the CMS's Site health (`GET
 text) and its own basics (a sitemap, robots.txt, a 404 page), and warns about
 what fails. `cms({ siteHealth: "error" })` makes a failing check stop the build.
 
+## Launch checklist
+
+Every build reports what it checked about the site it built to the CMS,
+which shows it in **Tools › Launch** beside the CMS's own items (email,
+deploy hook, tokens, files, forms…), each with its evidence
+(librepublishgo's docs/launch-checklist.md). A failing item warns in the
+build's log; none stops the build.
+
+| Item | Passes when |
+|---|---|
+| `build.schema_lock` | `cms.lock.json` matched the CMS |
+| `build.prerendered` | Only the routes in `onDemand` render on demand |
+| `build.no_secrets` | The CMS's token is in no built file (and, when every page is prerendered, its address isn't in the server's code) |
+| `build.media_local` | No built page links a file on the CMS (`localFiles`) |
+| `build.site_files` | `sitemap.xml`, `robots.txt` and `404.html` were built |
+| `build.redirects` | `_redirects` holds the CMS's rules and nothing else |
+| `build.forms` | The forms the pages draw exist in the CMS and are open |
+| `build.env` | `env.build`'s variables were set; `env.runtime`'s become a manual item ("Set on the host: …") |
+| `site.<key>` | The site's own `checks` |
+
+```js
+cms({
+  sitemap: false,
+  onDemand: ["/api/quote-hook"],
+  env: { build: ["CMS_BASE_URL", "CMS_API_TOKEN", "SITE_URL"], runtime: ["CMS_FORM_HOOK_SECRET", "STELLA_WEBHOOK_URL"] },
+  checks: [
+    { key: "stella", title: "Stella receives landing leads", launch: true },
+    { key: "lilypad", title: "Every state has its Lily Pad ids", run: () => Object.keys(FRANCHISES).length === 2 },
+  ],
+})
+```
+
+The build also leaves `CMS_BASE_URL` and `CMS_API_TOKEN` out of a Cloudflare
+adapter's `dist/server/.dev.vars` (it copies `.env` there for `wrangler dev`).
+
+**What only the live site can see.** A site with an adapter also serves
+`POST /_cms/checks` (and the build reports where). The CMS asks it,
+signed as a webhook is, with `CMS_WEBHOOK_SECRET` (Settings › Deploy's
+purge secret) or a form's hook secret (`CMS_FORM_HOOK_SECRET`); it answers
+which one verified the question and, for each `env.runtime` variable, only
+whether it's set — never a value. An unsigned or wrongly signed question
+gets a bare 401. That turns "Set on the host: …" into a checked item, and
+catches a site whose hook secret isn't its form's.
+
 ## Options
 
 | Option | Default | |
@@ -599,7 +643,11 @@ what fails. `cms({ siteHealth: "error" })` makes a failing check stop the build.
 | `i18n` | `true` | Sets up Astro's i18n from the CMS's locales. Every locale except the default gets a path prefix. |
 | `sitemap` | `true` | Adds `/sitemap.xml`, and `/robots.txt` unless `public/robots.txt` exists. The sitemap's URLs follow the site's `trailingSlash` (`always` or `never`), so they match its canonicals. After a build, the sitemap keeps only the URLs the site serves (its built pages and on-demand routes), and warns about the rest. |
 | `siteHealth` | `"warn"` | `"error"` stops the build on a failing check; `"off"` skips the checks. |
-| `report` | `true` | Tells the CMS about each build (`POST /api/frontend/builds`): how the site renders, its webhook, and the content cursor it built from. |
+| `report` | `true` | Tells the CMS about each build (`POST /api/frontend/builds`): how the site renders, its webhook, the content cursor it built from, and its [launch checklist](#launch-checklist) items. |
+| `localFiles` | `true` | Copies the CMS files the built pages link into the build (`cms-files/`) and points the links at the copies, so the live site serves its own images. Pages rendered on demand still link the CMS. |
+| `onDemand` | — | The routes meant to render on demand (`["/api/quote-hook"]`, as Astro names them); the launch checklist flags any other route that does. |
+| `env` | — | `{ build: [...], runtime: [...] }`: the variables the site needs where it's built and where it runs, by name (never a value). |
+| `checks` | — | The site's own launch checklist items: `{ key, title, launch?, run?, fix?, fixLabel? }`. With `run` the build runs it (`true`, `false`, or `{ state, evidence }`); without, a person ticks it in the CMS. |
 
 ## Entry points
 
@@ -620,6 +668,25 @@ what fails. `cms({ siteHealth: "error" })` makes a failing check stop the build.
 | `@librepublish/astro/components/FormIsland.svelte` | The island `StaticForm` renders, for a site's own Svelte component. |
 | `librepublish:types` | Generated from the CMS's schema. |
 | `npx librepublish-astro sync\|check` | The schema lock. |
+
+## Changes in 0.8.0
+
+Needs librepublishgo 2.9.0 for the CMS to show the checklist (an older CMS
+keeps what it knew of a build report and ignores the rest).
+
+
+- **Launch checklist**: each build reports its checks (`build.*`) and the
+  site's own (`cms({ checks, env, onDemand })`) to the CMS, which shows them
+  in Tools › Launch (librepublishgo with the Launch plugin). Failing ones
+  warn; none stop the build.
+- **`localFiles`** (on by default): the CMS files the built pages link are
+  copied into the build and served by the site; a site's own
+  `scripts/cms-static.mjs` can go.
+- The build leaves the CMS's address and token out of the Cloudflare
+  adapter's `.dev.vars`.
+- `POST /_cms/checks` (sites with an adapter): the CMS's launch checklist
+  asks the live site whether its runtime variables are set and whether it
+  shares a form's hook secret; `checks_url` in the build report says where.
 
 ## Changes in 0.7.0
 

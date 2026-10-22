@@ -150,6 +150,10 @@ export interface BuildReport {
   site_url?: string;
   duration_ms?: number;
   schema_digest?: string;
+  /** Where the live site answers the launch checklist's questions (POST, signed): /_cms/checks. */
+  checks_url?: string;
+  /** The build's items for the CMS's launch checklist (src/launch-checks.ts). */
+  checks?: import("./launch-checks.js").LaunchCheck[];
 }
 
 function segments(path: string): string {
