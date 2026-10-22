@@ -318,7 +318,7 @@ export default function cms(options: CmsOptions = {}): AstroIntegration {
           schemaCheck(locked),
           prerenderCheck(onDemandRoutes.filter((route) => !route.startsWith("/_cms/") && !route.startsWith("/_server-islands") && route !== "/_image"), options.onDemand),
           await secretsCheck({ dirs: [assetsDir, ...(serverDir ? [serverDir] : [])], serverDir, token: connection.token, cmsUrl: connection.url, onDemand: onDemandPatterns.length > 0 }),
-          mediaCheck(local, render),
+          mediaCheck(local, onDemandPatterns.length > 0),
           siteFilesCheck(assetsDir, sitemap),
           redirectsCheck(redirectCount),
           await formsCheck(assetsDir, await client.formList().then((list) => list.forms, () => null)),

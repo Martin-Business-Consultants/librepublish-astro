@@ -669,6 +669,13 @@ catches a site whose hook secret isn't its form's.
 | `librepublish:types` | Generated from the CMS's schema. |
 | `npx librepublish-astro sync\|check` | The schema lock. |
 
+## Changes in 0.8.1
+
+- `build.forms` finds a form a site's own island names in minified code
+  (`slug:`contact``), not only in quotes.
+- `build.media_local` mentions pages rendered on demand only when a page
+  is (not just an endpoint).
+
 ## Changes in 0.8.0
 
 Needs librepublishgo 2.9.0 for the CMS to show the checklist (an older CMS

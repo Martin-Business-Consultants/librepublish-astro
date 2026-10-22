@@ -1,6 +1,6 @@
 {
   "name": "@librepublish/astro",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "Build an Astro site on LibrePublish CMS (the Go core): schema-locked typed content loaders, live collections, generated types, blocks, rich text, branding, images, SEO, live forms (on demand, or a client island on a static site), sitemap, redirects, cache purges and build checks",
   "license": "FSL-1.1-MIT",
   "type": "module",

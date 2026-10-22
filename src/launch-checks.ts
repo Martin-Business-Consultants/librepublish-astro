@@ -112,13 +112,13 @@ export async function secretsCheck(options: { dirs: URL[]; serverDir?: URL; toke
 }
 
 /** build.media_local: no page links a file on the CMS (localFiles copied them all). */
-export function mediaCheck(result: { copied: number; left: string[]; missing: string[] } | null, render: string): LaunchCheck {
+export function mediaCheck(result: { copied: number; left: string[]; missing: string[] } | null, onDemandPages: boolean): LaunchCheck {
   const check: LaunchCheck = { key: "build.media_local", group: "build", title: "The site serves its own images", launch: true };
   if (!result) return { ...check, state: "warns", evidence: "cms({ localFiles: false }): pages link files on the CMS, so the live site depends on the CMS's host for every image." };
   if (result.left.length) {
     return { ...check, state: "fails", evidence: `${list(result.left)} still link files on the CMS${result.missing.length ? ` (the CMS has no file for ${list(result.missing, 4)})` : ""}.` };
   }
-  const onDemand = render !== "static" ? " Pages rendered on demand still link the CMS." : "";
+  const onDemand = onDemandPages ? " Pages rendered on demand still link the CMS." : "";
   return { ...check, state: "passes", evidence: `${plural(result.copied, "file")} from the CMS copied into the build; no built page links the CMS.${onDemand}` };
 }
 
@@ -151,7 +151,11 @@ export async function formsCheck(dir: URL, forms: FormList["forms"] | null): Pro
   for await (const file of textFiles(fileURLToPath(dir))) {
     const text = await readFile(file, "utf8");
     for (const m of text.matchAll(/&quot;slug&quot;:\[0,&quot;([a-z0-9_-]+)&quot;\]/g)) props.add(m[1]);
-    for (const form of forms) if (text.includes(`"${form.slug}"`) || text.includes(`&quot;${form.slug}&quot;`)) quoted.add(form.slug);
+    // As a string in any of the forms a build writes it: "x", 'x', `x` (a
+    // minifier's template literal), or &quot;x&quot; in an island's props.
+    for (const form of forms) {
+      if (['"', "'", "`"].some((q) => text.includes(`${q}${form.slug}${q}`)) || text.includes(`&quot;${form.slug}&quot;`)) quoted.add(form.slug);
+    }
   }
   const bySlug = new Map(forms.map((form) => [form.slug, form]));
   const unknown = [...props].filter((slug) => !bySlug.has(slug));

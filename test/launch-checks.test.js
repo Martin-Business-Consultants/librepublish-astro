@@ -45,7 +45,7 @@ test("localizeFiles copies the files pages link and points the links at the copi
   assert.match(html, /cms\.acme\.example\/api\/x\/forms\/submit/, "the forms' address isn't a file");
   assert.deepEqual(result.missing, ["/files/gone/x.png"]);
   assert.deepEqual(result.left, ["/index.html"]);
-  assert.equal(mediaCheck(result, "static").state, "fails");
+  assert.equal(mediaCheck(result, false).state, "fails");
 });
 
 test("scrubDevVars leaves the CMS's address and token out of .dev.vars", async () => {
@@ -80,6 +80,8 @@ test("formsCheck: the forms pages draw exist and are open", async () => {
   const forms = [{ slug: "contact", name: "Contact", open: true, digest: "" }, { slug: "old", name: "Old", open: false, digest: "" }];
   const island = await built({ "_astro/ContactIsland.js": `x({slug:"contact",cms:y})` });
   assert.equal((await formsCheck(island, forms)).state, "passes");
+  const minified = await built({ "_astro/ContactIsland.js": "m(S,{slug:`contact`,get cms(){}})" });
+  assert.equal((await formsCheck(minified, forms)).state, "passes", "a minifier's template literal");
   const staticForm = await built({ "index.html": `<astro-island props="{&quot;slug&quot;:[0,&quot;quote&quot;]}">` });
   const missing = await formsCheck(staticForm, forms);
   assert.equal(missing.state, "fails");
